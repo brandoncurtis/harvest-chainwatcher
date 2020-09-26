@@ -6,13 +6,13 @@ import requests
 import datetime
 import time
 import random
-
+import os
 from dotenv import load_dotenv
-load_dotenv()
 
-START_BLOCK = os.getenv("START_BLOCK")
+load_dotenv()
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 NODE_URL = os.getenv("NODE_URL")
+START_BLOCK = int(os.getenv("START_BLOCK"))
 
 w3 = Web3(Web3.HTTPProvider(NODE_URL))
 
@@ -94,10 +94,13 @@ def handle_event(event):
   # and whatever
 
 def log_catchup(event_filter):
+  print(f'Starting log lookback at {START_BLOCK}...')
   for event in event_filter.get_all_entries():
     handle_event(event)
+  print('Lookback complete!')
 
 async def log_loop(event_filter, poll_interval):
+  print('Starting watch for new logs...')
   while True:
     for event in event_filter.get_new_entries():
       handle_event(event)
