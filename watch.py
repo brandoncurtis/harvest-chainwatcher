@@ -8,14 +8,20 @@ import time
 import random
 import os
 from dotenv import load_dotenv
+from web3.logs import STRICT, IGNORE, DISCARD, WARN
 
 load_dotenv()
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 NODE_URL = os.getenv("NODE_URL")
 START_BLOCK = int(os.getenv("START_BLOCK"))
 LOOK_BACK = os.getenv("LOOK_BACK")
+POST_TO_DISCORD = os.getenv("POST_TO_DISCORD")
 CONTROLLER_ABI = os.getenv("CONTROLLER_ABI")
 STRAT_ABI = os.getenv("STRAT_ABI")
+TOKEN_FARM_ABI = os.getenv("TOKEN_FARM_ABI")
+TOKEN_FARM_ADDR = os.getenv("TOKEN_FARM_ADDR")
+PROFITSHARE_V2_ADDR = os.getenv("PROFITSHARE_V2_ADDR")
+PROFITSHARE_V3_ADDR = os.getenv("PROFITSHARE_V3_ADDR")
 
 w3 = Web3(Web3.HTTPProvider(NODE_URL))
 
@@ -73,8 +79,10 @@ CHADISMS = [
   'OUCH',
 ]
 
+token_farm_contract = w3.eth.contract(address=TOKEN_FARM_ADDR, abi=TOKEN_FARM_ABI)
+
 def handle_event(event):
-  print(event)
+  #print(event)
   time.sleep(3)
   shareprice_decimals = vaults.get(event.args.vault, {'decimals':'0'})['decimals']
   shareprice = event.args.newSharePrice * ( 10 ** ( -1 * shareprice_decimals ) )
@@ -85,13 +93,23 @@ def handle_event(event):
   strat_name = strats.get(strat_addr, 'farming strategy')
   dt = datetime.datetime.utcfromtimestamp(event.args.timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
+  farm_xfrs = ''
+  receipt = w3.eth.getTransactionReceipt(txhash)
+  token_farm_logs = token_farm_contract.events.Transfer().processReceipt(receipt, errors=DISCARD)
+  for xfr in token_farm_logs:
+    if xfr.address == TOKEN_FARM_ADDR and (xfr.args.to == PROFITSHARE_V2_ADDR or xfr.args.to == PROFITSHARE_V3_ADDR):
+      farm_xfrs += (f'FARM to profit share: {xfr.args.value*10**-18} :farmer:\n')
+
   msg =  (f'\nAt `{dt} GMT`, harvested some [{asset}](<https://etherscan.io/tx/{txhash}>) '
-  f'using the [{strat_name}](<https://etherscan.io/address/{strat_addr}#code>)!\n'
-  f'Share price changes `{round(100*shareprice_delta,4):.4f}%` to `{round(shareprice,6):.6f}`! {random.choice(CHADISMS)}. :tractor:\n'
+    f'using the [{strat_name}](<https://etherscan.io/address/{strat_addr}#code>)!\n'
+    f'Share price changes `{round(100*shareprice_delta,4):.4f}%` to `{round(shareprice,6):.6f}`! :chart_with_upwards_trend:\n'
+    f'{farm_xfrs}'
+    f'{random.choice(CHADISMS)}. :tractor:<:chadleft:758033272092491867><:chadright:758033272101011622>:corn:\n'
     )
   json_payload = {'content': msg, 'embeds': [],}
   print(msg)
-  requests.post(WEBHOOK_URL, json_payload)
+  if POST_TO_DISCORD == 'True':
+    requests.post(WEBHOOK_URL, json_payload)
   # and whatever
 
 def log_lookback(event_filter):
