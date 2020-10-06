@@ -10,7 +10,7 @@ import os
 from dotenv import load_dotenv
 from web3.logs import STRICT, IGNORE, DISCARD, WARN
 
-load_dotenv()
+load_dotenv(override=True)
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 NODE_URL = os.getenv("NODE_URL")
 START_BLOCK = int(os.getenv("START_BLOCK"))
@@ -70,6 +70,7 @@ vaults = {
   '0xB19EbFB37A936cCe783142955D39Ca70Aa29D43c': {'asset': 'fUNI-ETH-USDT', 'decimals': 18,},
   '0x63671425ef4D25Ec2b12C7d05DE855C143f16e3B': {'asset': 'fUNI-ETH-USDC', 'decimals': 18,},
   '0x1a9F22b4C385f78650E7874d64e442839Dc32327': {'asset': 'fUNI-ETH-DAI', 'decimals': 18,},
+  '0x7674622c63Bee7F46E86a4A5A18976693D54441b': {'asset': 'fTUSD', 'decimals': 18,},
 }
 
 CHADISMS = [
