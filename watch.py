@@ -98,7 +98,7 @@ def handle_event(event):
   token_farm_logs = token_farm_contract.events.Transfer().processReceipt(receipt, errors=DISCARD)
   for xfr in token_farm_logs:
     if xfr.address == TOKEN_FARM_ADDR and (xfr.args.to == PROFITSHARE_V2_ADDR or xfr.args.to == PROFITSHARE_V3_ADDR):
-      farm_xfrs += (f'FARM to profit share: {xfr.args.value*10**-18} :farmer:\n')
+      farm_xfrs += (f'FARM to profit share: `{xfr.args.value*10**-18}` :farmer:\n')
 
   msg =  (f'\nAt `{dt} GMT`, harvested some [{asset}](<https://etherscan.io/tx/{txhash}>) '
     f'using the [{strat_name}](<https://etherscan.io/address/{strat_addr}#code>)!\n'
