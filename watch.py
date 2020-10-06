@@ -10,7 +10,7 @@ import os
 from dotenv import load_dotenv
 from web3.logs import STRICT, IGNORE, DISCARD, WARN
 
-load_dotenv()
+load_dotenv(override=True)
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 NODE_URL = os.getenv("NODE_URL")
 START_BLOCK = int(os.getenv("START_BLOCK"))
