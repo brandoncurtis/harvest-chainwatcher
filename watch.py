@@ -22,10 +22,12 @@ TOKEN_FARM_ABI = os.getenv("TOKEN_FARM_ABI")
 TOKEN_FARM_ADDR = os.getenv("TOKEN_FARM_ADDR")
 PROFITSHARE_V2_ADDR = os.getenv("PROFITSHARE_V2_ADDR")
 PROFITSHARE_V3_ADDR = os.getenv("PROFITSHARE_V3_ADDR")
+UNISWAP_ABI = os.getenv("UNISWAP_ABI")
 
 w3 = Web3(Web3.HTTPProvider(NODE_URL))
 
 controller_addr = '0x222412af183BCeAdEFd72e4Cb1b71f1889953b1C'
+uniswap_addr = '0x514906FC121c7878424a5C928cad1852CC545892'
 
 strats = {
   '0xCf5F83F8FE0AB0f9E9C1db07E6606dD598b2bbf5': 'Swerve CRVStrategyYCRVMainnet v1',
@@ -119,24 +121,27 @@ def log_lookback(event_filter):
     handle_event(event)
   print('Lookback complete!')
 
-async def log_loop(event_filter, poll_interval):
+async def log_loop(event_filters, poll_interval):
   print('Starting watch for new logs...')
   while True:
-    for event in event_filter.get_new_entries():
-      handle_event(event)
+    for event_filter in event_filters:
+      for event in event_filter.get_new_entries():
+        handle_event(event)
     await asyncio.sleep(poll_interval)
 
 def main():
   controller_contract = w3.eth.contract(address=controller_addr, abi=CONTROLLER_ABI)
+  uniswap_contract = w3.eth.contract(address=uniswap_addr, abi=UNISWAP_ABI)
   if LOOK_BACK == 'True':
     controller_filter_lookback = controller_contract.events.SharePriceChangeLog.createFilter(fromBlock=START_BLOCK)
     log_lookback(controller_filter_lookback)
   loop = asyncio.get_event_loop()
   controller_filter = controller_contract.events.SharePriceChangeLog.createFilter(fromBlock='latest')
+  uniswap_filter = uniswap_contract.events.Swap.createFilter(fromBlock='latest')
   try:
     loop.run_until_complete(
       asyncio.gather(
-        log_loop(controller_filter, 10),
+        log_loop([controller_filter,uniswap_filter], 10),
       )
     )
   finally:
