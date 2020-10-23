@@ -11,23 +11,35 @@ from dotenv import load_dotenv
 from web3.logs import STRICT, IGNORE, DISCARD, WARN
 
 load_dotenv(override=True)
+# URLs
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 NODE_URL = os.getenv("NODE_URL")
-START_BLOCK = int(os.getenv("START_BLOCK"))
-LOOK_BACK = os.getenv("LOOK_BACK")
+# BOT BEHAVIOR
 POST_TO_DISCORD = os.getenv("POST_TO_DISCORD")
+START_BLOCK = int(os.getenv("START_BLOCK"))
+LOOKBACK = os.getenv("LOOKBACK")
+LOOKBACK_TRADES = os.getenv("LOOKBACK_TRADES")
+LOOKBACK_HARVESTS = os.getenv("LOOKBACK_HARVESTS")
+LOOKBACK_STRATEGIES = os.getenv("LOOKBACK_STRATEGIES")
+WATCH = os.getenv("WATCH")
+# CONTRACTS
 CONTROLLER_ABI = os.getenv("CONTROLLER_ABI")
 STRAT_ABI = os.getenv("STRAT_ABI")
+VAULT_TIMELOCK_ABI = os.getenv("VAULT_TIMELOCK_ABI")
 TOKEN_FARM_ABI = os.getenv("TOKEN_FARM_ABI")
 TOKEN_FARM_ADDR = os.getenv("TOKEN_FARM_ADDR")
 PROFITSHARE_V2_ADDR = os.getenv("PROFITSHARE_V2_ADDR")
 PROFITSHARE_V3_ADDR = os.getenv("PROFITSHARE_V3_ADDR")
-UNISWAP_ABI = os.getenv("UNISWAP_ABI")
+UNIPOOL_ABI = os.getenv("UNIPOOL_ABI")
+UNIROUTER_ABI = os.getenv("UNIROUTER_ABI")
+# CONSTANTS
+ONE_18DEC = 1000000000000000000
 
 w3 = Web3(Web3.HTTPProvider(NODE_URL))
 
 controller_addr = '0x222412af183BCeAdEFd72e4Cb1b71f1889953b1C'
-uniswap_addr = '0x514906FC121c7878424a5C928cad1852CC545892'
+unipool_addr = '0x514906FC121c7878424a5C928cad1852CC545892'
+unirouter_addr = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
 
 strats = {
   '0xCf5F83F8FE0AB0f9E9C1db07E6606dD598b2bbf5': 'Swerve CRVStrategyYCRVMainnet v1',
@@ -57,22 +69,39 @@ strats = {
   '0x4E015af8E1C5eB020f91063661CC5ce43719eBcF': 'WETHCreamNoFoldStrategy v1',
   '0xcF477F117cAa349Ca92dEdb3955481628D463bF1': 'WETHCreamNoFoldStrategy v2',
   '0x26D3e02999BEFFAEb07Af3A94438769DF0eE4150': 'WETH Cream Rescue Strategy',
+  '0x53df6664b3ddE086DCe6315c317d1002b14B87E3': 'SushiMasterChefLPStrategy',
+  '0x0fd7c77b473e3Efe3170536805a14b61050eFc6E': 'funi-eth-usdt SNXRewardUniLPStrategy',
+  '0xC6E973B8Fe772C58AD0D20099D43D2b3f0AEF5c0': 'funi-eth-usdc SNXRewardUniLPStrategy',
+  '0x2CF4cEB36172Fb2196a47490419D57584234Cbd4': 'funi-eth-dai SNXRewardUniLPStrategy',
+  '0x46eC909099F9691b43b64413F1BC662edFbee00A': 'funi-eth-wbtc SNXRewardUniLPStrategy',
 }
 
 vaults = {
-  '0x8e298734681adbfC41ee5d17FF8B0d6d803e7098': {'asset': 'fWETH', 'decimals': 18,},
-  '0xe85C8581e60D7Cd32Bbfd86303d2A4FA6a951Dac': {'asset': 'fDAI', 'decimals': 18,},
-  '0xc3F7ffb5d5869B3ade9448D094d81B0521e8326f': {'asset': 'fUSDC', 'decimals': 6,},
-  '0xc7EE21406BB581e741FBb8B21f213188433D9f2F': {'asset': 'fUSDT', 'decimals': 6,},
+  '0x8e298734681adbfC41ee5d17FF8B0d6d803e7098': {'asset': 'fWETH-v0', 'decimals': 18,},
+  '0xe85C8581e60D7Cd32Bbfd86303d2A4FA6a951Dac': {'asset': 'fDAI-v0', 'decimals': 18,},
+  '0xc3F7ffb5d5869B3ade9448D094d81B0521e8326f': {'asset': 'fUSDC-v0', 'decimals': 6,},
+  '0xc7EE21406BB581e741FBb8B21f213188433D9f2F': {'asset': 'fUSDT-v0', 'decimals': 6,},
   '0xF2B223Eb3d2B382Ead8D85f3c1b7eF87c1D35f3A': {'asset': 'FARM yDAI+yUSDC+yUSDT+yTUSD', 'decimals': 18,},
-  '0xfBe122D0ba3c75e1F7C80bd27613c9f35B81FEeC': {'asset': 'fRenBTC', 'decimals': 8,},
-  '0xc07EB91961662D275E2D285BdC21885A4Db136B0': {'asset': 'fWBTC', 'decimals': 8,},
-  '0x192E9d29D43db385063799BC239E772c3b6888F3': {'asset': 'fCRVRenWBTC', 'decimals': 18,},
-  '0xb1FeB6ab4EF7d0f41363Da33868e85EB0f3A57EE': {'asset': 'fUNI-ETH-WBTC', 'decimals': 18,},
-  '0xB19EbFB37A936cCe783142955D39Ca70Aa29D43c': {'asset': 'fUNI-ETH-USDT', 'decimals': 18,},
-  '0x63671425ef4D25Ec2b12C7d05DE855C143f16e3B': {'asset': 'fUNI-ETH-USDC', 'decimals': 18,},
-  '0x1a9F22b4C385f78650E7874d64e442839Dc32327': {'asset': 'fUNI-ETH-DAI', 'decimals': 18,},
-  '0x7674622c63Bee7F46E86a4A5A18976693D54441b': {'asset': 'fTUSD', 'decimals': 18,},
+  '0xfBe122D0ba3c75e1F7C80bd27613c9f35B81FEeC': {'asset': 'fRenBTC-v0', 'decimals': 8,},
+  '0xc07EB91961662D275E2D285BdC21885A4Db136B0': {'asset': 'fWBTC-v0', 'decimals': 8,},
+  '0x192E9d29D43db385063799BC239E772c3b6888F3': {'asset': 'fCRVRenWBTC-v0', 'decimals': 18,},
+  '0xb1FeB6ab4EF7d0f41363Da33868e85EB0f3A57EE': {'asset': 'fUNI-ETH-WBTC-v0', 'decimals': 18,},
+  '0xB19EbFB37A936cCe783142955D39Ca70Aa29D43c': {'asset': 'fUNI-ETH-USDT-v0', 'decimals': 18,},
+  '0x63671425ef4D25Ec2b12C7d05DE855C143f16e3B': {'asset': 'fUNI-ETH-USDC-v0', 'decimals': 18,},
+  '0x1a9F22b4C385f78650E7874d64e442839Dc32327': {'asset': 'fUNI-ETH-DAI-v0', 'decimals': 18,},
+  '0x01112a60f427205dcA6E229425306923c3Cc2073': {'asset': 'fUNI-ETH-WBTC', 'decimals': 18, 'type': 'timelock',},
+  '0x7DDc3ffF0612E75Ea5ddC0d6Bd4e268f70362Cff': {'asset': 'fUNI-ETH-USDT', 'decimals': 18, 'type': 'timelock',},
+  '0xA79a083FDD87F73c2f983c5551EC974685D6bb36': {'asset': 'fUNI-ETH-USDC', 'decimals': 18, 'type': 'timelock',},
+  '0x307E2752e8b8a9C29005001Be66B1c012CA9CDB7': {'asset': 'fUNI-ETH-DAI', 'decimals': 18, 'type': 'timelock',},
+  '0xF553E1f826f42716cDFe02bde5ee76b2a52fc7EB': {'asset': 'fSUHI-WBTC-TBTC', 'decimals': 18, 'type': 'timelock',},
+  '0x7674622c63Bee7F46E86a4A5A18976693D54441b': {'asset': 'fTUSD', 'decimals': 18, 'type': 'timelock',},
+  '0xFE09e53A81Fe2808bc493ea64319109B5bAa573e': {'asset': 'fWETH', 'decimals': 18, 'type': 'timelock',},
+  '0xab7FA2B2985BCcfC13c6D86b1D5A17486ab1e04C': {'asset': 'fDAI', 'decimals': 18, 'type': 'timelock',},
+  '0xf0358e8c3CD5Fa238a29301d0bEa3D63A17bEdBE': {'asset': 'fUSDC', 'decimals': 6, 'type': 'timelock',},
+  '0x053c80eA73Dc6941F518a68E2FC52Ac45BDE7c9C': {'asset': 'fUSDT', 'decimals': 6, 'type': 'timelock',},
+  '0x5d9d25c7C457dD82fc8668FFC6B9746b674d4EcB': {'asset': 'fWBTC', 'decimals': 8, 'type': 'timelock',},
+  '0xC391d1b08c1403313B0c28D47202DFDA015633C4': {'asset': 'fRENBTC', 'decimals': 8, 'type': 'timelock',},
+  '0x9aA8F427A17d6B0d91B6262989EdC7D45d6aEdf8': {'asset': 'fCRVRENWBTC', 'decimals': 18, 'type': 'timelock',},
 }
 
 CHADISMS = [
@@ -80,45 +109,104 @@ CHADISMS = [
   'DUDE',
   'NICE',
   'OUCH',
+  'SICK',
+  'BOSS',
 ]
 
 token_farm_contract = w3.eth.contract(address=TOKEN_FARM_ADDR, abi=TOKEN_FARM_ABI)
+controller_contract = w3.eth.contract(address=controller_addr, abi=CONTROLLER_ABI)
+unipool_contract = w3.eth.contract(address=unipool_addr, abi=UNIPOOL_ABI)
+unirouter_contract = w3.eth.contract(address=unirouter_addr, abi=UNIROUTER_ABI)
+
+txids_seen = []
 
 def handle_event(event):
-  #print(event)
-  time.sleep(3)
-  shareprice_decimals = vaults.get(event.args.vault, {'decimals':'0'})['decimals']
-  shareprice = event.args.newSharePrice * ( 10 ** ( -1 * shareprice_decimals ) )
-  shareprice_delta = (event.args.newSharePrice - event.args.oldSharePrice) / event.args.oldSharePrice
-  asset = vaults.get(event.args.vault, {'asset':'assets'})['asset']
   txhash = event.transactionHash.hex()
-  strat_addr = event.args.strategy
-  strat_name = strats.get(strat_addr, 'farming strategy')
-  dt = datetime.datetime.utcfromtimestamp(event.args.timestamp).strftime('%Y-%m-%d %H:%M:%S')
+  blocknum = event.blockNumber
+  print(event)
+  msg = ''
+  # UNISWAP TRADE
+  if event.address == unipool_addr:
+    if txhash in txids_seen:
+      return
+    farmsell, farmbuy = int(event.args.amount0In)*10**-18, int(event.args.amount0Out)*10**-18
+    usdcsell, usdcbuy = int(event.args.amount1In)*10**-6, int(event.args.amount1Out)*10**-6
+    # get price information
+    print(f'fetching pool reserves...')
+    poolvals = unipool_contract.functions['getReserves']().call(block_identifier=blocknum)
+    print(f'calculating price...')
+    price = unirouter_contract.functions['quote'](ONE_18DEC, poolvals[0], poolvals[1]).call(block_identifier=blocknum)*10**-6
+    # build message
+    if farmbuy > 0:
+      pricechange = 100 * farmbuy / ( poolvals[0] * 10**-18)
+      if pricechange < 1.0:
+        return
+      msg = (f':chart_with_upwards_trend: At block `{blocknum}`, '
+             f'`+{pricechange:.4f}%`:evergreen_tree: to `${price:,.2f}`; '
+             f'`{farmbuy:,.2f}` FARM was [bought](<https://etherscan.io/tx/{txhash}>)!'
+             )
+    if farmsell > 0:
+      pricechange = 100 * farmsell / ( poolvals[0] * 10**-18)
+      if pricechange < 1.0:
+        return
+      msg = (f':chart_with_downwards_trend: At block `{blocknum}`, '
+             f'`-{pricechange:.4f}%`:small_red_triangle_down: to `${price:,.2f}`; '
+             f'`{farmsell:,.2f}` FARM was [sold](<https://etherscan.io/tx/{txhash}>)!'
+             )
+  # VAULT EVENT
+  elif event.address in vaults.keys():
+    event_name = event.event
+    new_strategy = event.args.newStrategy
+    vault_name = vaults.get(event.address, {'asset':'asset'})['asset']
+    if event_name == 'StrategyAnnounced':
+      dt_activated = f'{datetime.datetime.utcfromtimestamp(event.args.time).strftime("%Y-%m-%d %H:%M:%S")} GMT'
+      old_strategy = 'old strategy'
+    elif event_name == 'StrategyChanged':
+      dt_activated = 'this block'
+      old_strategy = event.args.get('oldStrategy', 'old strategy')
+    msg = (f':compass: At block `{blocknum}`, [{event_name}](<https://etherscan.io/tx/{txhash}>) '
+           f'for {vault_name}!\n'
+           f':crossed_swords: Old strategy: `{old_strategy}`\n'
+           f':rocket: New strategy: `{new_strategy}`\n'
+           f':alarm_clock: Earliest effective: `{dt_activated}`!'
+            )
+  # HARVEST
+  else:
+    shareprice_decimals = vaults.get(event.args.vault, {'decimals':'0'})['decimals']
+    shareprice = event.args.newSharePrice * ( 10 ** ( -1 * shareprice_decimals ) )
+    shareprice_delta = (event.args.newSharePrice - event.args.oldSharePrice) / event.args.oldSharePrice
+    asset = vaults.get(event.args.vault, {'asset':'assets'})['asset']
+    strat_addr = event.args.strategy
+    strat_name = strats.get(strat_addr, 'farming strategy')
+    dt = datetime.datetime.utcfromtimestamp(event.args.timestamp).strftime('%Y-%m-%d %H:%M:%S')
+    farm_xfrs = ''
+    receipt = w3.eth.getTransactionReceipt(txhash)
+    token_farm_logs = token_farm_contract.events.Transfer().processReceipt(receipt, errors=DISCARD)
+    for xfr in token_farm_logs:
+      if xfr.address == TOKEN_FARM_ADDR and (xfr.args.to == PROFITSHARE_V2_ADDR or xfr.args.to == PROFITSHARE_V3_ADDR):
+        farm_xfrs += (f':farmer: FARM to profit share: `{xfr.args.value*10**-18}`\n')
+    msg =  (f':tractor: At `{dt} GMT`, did `HardWork` on [{asset}](<https://etherscan.io/tx/{txhash}>)\n'
+            f':tools: Using the [{strat_name}](<https://etherscan.io/address/{strat_addr}#code>)!\n'
+            f':chart_with_upwards_trend: Share price changes `{round(100*shareprice_delta,4):.4f}%` to `{round(shareprice,6):.6f}`!\n'
+            f'{farm_xfrs}'
+            f'<:chadright:758033272101011622> {random.choice(CHADISMS)}.'
+            )
+  send_msg(msg)
+  txids_seen.append(txhash)
 
-  farm_xfrs = ''
-  receipt = w3.eth.getTransactionReceipt(txhash)
-  token_farm_logs = token_farm_contract.events.Transfer().processReceipt(receipt, errors=DISCARD)
-  for xfr in token_farm_logs:
-    if xfr.address == TOKEN_FARM_ADDR and (xfr.args.to == PROFITSHARE_V2_ADDR or xfr.args.to == PROFITSHARE_V3_ADDR):
-      farm_xfrs += (f'FARM to profit share: `{xfr.args.value*10**-18}` :farmer:\n')
-
-  msg =  (f'\nAt `{dt} GMT`, harvested some [{asset}](<https://etherscan.io/tx/{txhash}>) '
-    f'using the [{strat_name}](<https://etherscan.io/address/{strat_addr}#code>)!\n'
-    f'Share price changes `{round(100*shareprice_delta,4):.4f}%` to `{round(shareprice,6):.6f}`! :chart_with_upwards_trend:\n'
-    f'{farm_xfrs}'
-    f'{random.choice(CHADISMS)}. :tractor:<:chadleft:758033272092491867><:chadright:758033272101011622>:corn:\n'
-    )
+def send_msg(msg):
   json_payload = {'content': msg, 'embeds': [],}
   print(msg)
-  if POST_TO_DISCORD == 'True':
+  if POST_TO_DISCORD == 'True' and len(msg) > 0:
     requests.post(WEBHOOK_URL, json_payload)
-  # and whatever
+  time.sleep(1)
 
-def log_lookback(event_filter):
+def log_lookback(event_filters):
   print(f'Starting log lookback at {START_BLOCK}...')
-  for event in event_filter.get_all_entries():
-    handle_event(event)
+  for n, event_filter in enumerate(event_filters, 1):
+    print(f'Starting log looback on contract {n}...')
+    for event in event_filter.get_all_entries():
+      handle_event(event)
   print('Lookback complete!')
 
 async def log_loop(event_filters, poll_interval):
@@ -130,22 +218,43 @@ async def log_loop(event_filters, poll_interval):
     await asyncio.sleep(poll_interval)
 
 def main():
-  controller_contract = w3.eth.contract(address=controller_addr, abi=CONTROLLER_ABI)
-  uniswap_contract = w3.eth.contract(address=uniswap_addr, abi=UNISWAP_ABI)
-  if LOOK_BACK == 'True':
-    controller_filter_lookback = controller_contract.events.SharePriceChangeLog.createFilter(fromBlock=START_BLOCK)
-    log_lookback(controller_filter_lookback)
-  loop = asyncio.get_event_loop()
-  controller_filter = controller_contract.events.SharePriceChangeLog.createFilter(fromBlock='latest')
-  uniswap_filter = uniswap_contract.events.Swap.createFilter(fromBlock='latest')
-  try:
-    loop.run_until_complete(
-      asyncio.gather(
-        log_loop([controller_filter,uniswap_filter], 10),
+  # set up lookback
+  lookback_filters = []
+  if LOOKBACK_HARVESTS == 'True':
+    lookback_filters.append(controller_contract.events.SharePriceChangeLog.createFilter(fromBlock=START_BLOCK))
+  if LOOKBACK_TRADES == 'True':
+    lookback_filters.append(unipool_contract.events.Swap.createFilter(fromBlock=START_BLOCK))
+  if LOOKBACK_STRATEGIES == 'True':
+    for vault in vaults:
+      if vaults.get(vault).get('type', '') == 'timelock':
+        vault_contract = w3.eth.contract(address=vault, abi=VAULT_TIMELOCK_ABI)
+        lookback_filters.append(vault_contract.events.StrategyAnnounced.createFilter(fromBlock=START_BLOCK))
+        lookback_filters.append(vault_contract.events.StrategyChanged.createFilter(fromBlock=START_BLOCK))
+  # run lookback
+  if LOOKBACK == 'True':
+    log_lookback(lookback_filters)
+  # set up the loop
+  if WATCH == 'True':
+    event_filters = []
+    print('watching for new events...')
+    loop = asyncio.get_event_loop()
+    event_filters.append(controller_contract.events.SharePriceChangeLog.createFilter(fromBlock='latest'))
+    event_filters.append(unipool_contract.events.Swap.createFilter(fromBlock='latest'))
+    for vault in vaults:
+      if vaults.get(vault).get('type', '') == 'timelock':
+        vault_contract = w3.eth.contract(address=vault, abi=VAULT_TIMELOCK_ABI)
+        event_filters.append(vault_contract.events.StrategyAnnounced.createFilter(fromBlock='latest'))
+        event_filters.append(vault_contract.events.StrategyChanged.createFilter(fromBlock='latest'))
+    # run the loop
+    try:
+      loop.run_until_complete(
+        asyncio.gather(
+          log_loop(event_filters, 10),
+        )
       )
-    )
-  finally:
-    loop.close()
+    finally:
+      loop.close()
+  print('done with everything!')
 
 if __name__ == '__main__':
     main()
