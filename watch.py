@@ -10,6 +10,15 @@ import os
 from dotenv import load_dotenv
 from web3.logs import STRICT, IGNORE, DISCARD, WARN
 
+# TWITTER STUFF
+import getopt
+import sys
+import twitter
+try:
+  import configparser
+except ImportError as _:
+  import ConfigParser as configparser
+
 load_dotenv(override=True)
 # URLs
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
@@ -113,6 +122,63 @@ CHADISMS = [
   'BOSS',
 ]
 
+# TWITTER CONFIG
+
+def GetConsumerKeyEnv():
+  return os.environ.get("TWEETUSERNAME", None)
+
+def GetConsumerSecretEnv():
+  return os.environ.get("TWEETPASSWORD", None)
+
+def GetAccessKeyEnv():
+  return os.environ.get("TWEETACCESSKEY", None)
+
+def GetAccessSecretEnv():
+  return os.environ.get("TWEETACCESSSECRET", None)
+
+class TweetRc(object):
+  def __init__(self):
+    self._config = None
+
+  def GetConsumerKey(self):
+    return self._GetOption('consumer_key')
+
+  def GetConsumerSecret(self):
+    return self._GetOption('consumer_secret')
+
+  def GetAccessKey(self):
+    return self._GetOption('access_key')
+
+  def GetAccessSecret(self):
+    return self._GetOption('access_secret')
+
+  def _GetOption(self, option):
+    try:
+      return self._GetConfig().get('Tweet', option)
+    except:
+            return None
+
+  def _GetConfig(self):
+    if not self._config:
+      self._config = configparser.ConfigParser()
+      self._config.read(os.path.expanduser('~/.tweetrc'))
+    return self._config
+
+# Twitter setup
+consumer_keyflag = None
+consumer_secretflag = None
+access_keyflag = None
+access_secretflag = None
+rc = TweetRc()
+consumer_key = consumer_keyflag or GetConsumerKeyEnv() or rc.GetConsumerKey()
+consumer_secret = consumer_secretflag or GetConsumerSecretEnv() or rc.GetConsumerSecret()
+access_key = access_keyflag or GetAccessKeyEnv() or rc.GetAccessKey()
+access_secret = access_secretflag or GetAccessSecretEnv() or rc.GetAccessSecret()
+api = twitter.Api(consumer_key=consumer_key, consumer_secret=consumer_secret,
+                  access_token_key=access_key, access_token_secret=access_secret,
+                  input_encoding="utf-8")
+
+# Smart Contracts
 token_farm_contract = w3.eth.contract(address=TOKEN_FARM_ADDR, abi=TOKEN_FARM_ABI)
 controller_contract = w3.eth.contract(address=controller_addr, abi=CONTROLLER_ABI)
 unipool_contract = w3.eth.contract(address=unipool_addr, abi=UNIPOOL_ABI)
@@ -125,6 +191,7 @@ def handle_event(event):
   blocknum = event.blockNumber
   print(event)
   msg = ''
+  tweet = False
   # UNISWAP TRADE
   if event.address == unipool_addr:
     if txhash in txids_seen:
@@ -170,6 +237,7 @@ def handle_event(event):
            f':rocket: New strategy: `{new_strategy}`\n'
            f':alarm_clock: Earliest effective: `{dt_activated}`!'
             )
+    tweet = f'🧭  {event_name} for @harvest_finance {vault_name}; earliest effective {dt_activated} https://etherscan.io/tx/{txhash}'
   # HARVEST
   else:
     shareprice_decimals = vaults.get(event.args.vault, {'decimals':'0'})['decimals']
@@ -191,14 +259,20 @@ def handle_event(event):
             f'{farm_xfrs}'
             f'<:chadright:758033272101011622> {random.choice(CHADISMS)}.'
             )
-  send_msg(msg)
+  send_msg(msg, tweet)
   txids_seen.append(txhash)
 
-def send_msg(msg):
+def send_msg(msg, tweet):
   json_payload = {'content': msg, 'embeds': [],}
   print(msg)
   if POST_TO_DISCORD == 'True' and len(msg) > 0:
     requests.post(WEBHOOK_URL, json_payload)
+  if tweet:
+    try:
+      print(msg)
+      status = api.PostUpdate(tweet)
+    except:
+      print('could not tweet')
   time.sleep(1)
 
 def log_lookback(event_filters):
