@@ -7,6 +7,7 @@ import datetime
 import time
 import random
 import os
+import json
 from dotenv import load_dotenv
 from web3.logs import STRICT, IGNORE, DISCARD, WARN
 
@@ -83,6 +84,16 @@ strats = {
   '0xC6E973B8Fe772C58AD0D20099D43D2b3f0AEF5c0': 'funi-eth-usdc SNXRewardUniLPStrategy',
   '0x2CF4cEB36172Fb2196a47490419D57584234Cbd4': 'funi-eth-dai SNXRewardUniLPStrategy',
   '0x46eC909099F9691b43b64413F1BC662edFbee00A': 'funi-eth-wbtc SNXRewardUniLPStrategy',
+  '0x885D59830C1FdB120B54d62790dB7A6a1f534463': 'PickleStrategy3PoolMainnet',
+  '0xD21C3b9aF9861b925c83046eA906FE933A50c977': 'CRVStrategyYCRVMainnet',
+  '0xC4c0d58c11eC41CC0f1a5bE75296cf140Ca8dd87': 'NoopStrategyStable',
+  '0xa23c6F2d85fe47e613ce6bBb40E74aCB49Ae281a': 'DEGOSimpleStrategy',
+  '0x0a1aD1698f7487655821c0d42d6691Ec43276E08': 'NoopStrategyStable',
+  '0x2059711f1cf4c215f48dBBbC4cf6aF5AC5131C82': 'NoopStrategyStable',
+  '0x099a926E55D24392BA3817fE38caA9eFA8c7b06A': 'NoopStrategyStable',
+  '0xE715458Cd3ba5377487822F748BE1a5b994Db436': 'NoopStrategyStable',
+  '0xABcEa95e3603C0604C81c2d95ED3aBD91c013aE6': 'NoopStrategyStable',
+  '0x3952555B3Be488F51f0b03315a85560a83c24E04': 'CRVStrategyWRenBTCMixMainnet',
 }
 
 vaults = {
@@ -102,7 +113,7 @@ vaults = {
   '0x7DDc3ffF0612E75Ea5ddC0d6Bd4e268f70362Cff': {'asset': 'fUNI-ETH-USDT', 'decimals': 18, 'type': 'timelock',},
   '0xA79a083FDD87F73c2f983c5551EC974685D6bb36': {'asset': 'fUNI-ETH-USDC', 'decimals': 18, 'type': 'timelock',},
   '0x307E2752e8b8a9C29005001Be66B1c012CA9CDB7': {'asset': 'fUNI-ETH-DAI', 'decimals': 18, 'type': 'timelock',},
-  '0xF553E1f826f42716cDFe02bde5ee76b2a52fc7EB': {'asset': 'fSUHI-WBTC-TBTC', 'decimals': 18, 'type': 'timelock',},
+  '0xF553E1f826f42716cDFe02bde5ee76b2a52fc7EB': {'asset': 'fSUSHI-WBTC-TBTC', 'decimals': 18, 'type': 'timelock',},
   '0x7674622c63Bee7F46E86a4A5A18976693D54441b': {'asset': 'fTUSD', 'decimals': 18, 'type': 'timelock',},
   '0xFE09e53A81Fe2808bc493ea64319109B5bAa573e': {'asset': 'fWETH', 'decimals': 18, 'type': 'timelock',},
   '0xab7FA2B2985BCcfC13c6D86b1D5A17486ab1e04C': {'asset': 'fDAI', 'decimals': 18, 'type': 'timelock',},
@@ -111,6 +122,8 @@ vaults = {
   '0x5d9d25c7C457dD82fc8668FFC6B9746b674d4EcB': {'asset': 'fWBTC', 'decimals': 8, 'type': 'timelock',},
   '0xC391d1b08c1403313B0c28D47202DFDA015633C4': {'asset': 'fRENBTC', 'decimals': 8, 'type': 'timelock',},
   '0x9aA8F427A17d6B0d91B6262989EdC7D45d6aEdf8': {'asset': 'fCRVRENWBTC', 'decimals': 18, 'type': 'timelock',},
+  '0x71B9eC42bB3CB40F017D8AD8011BE8e384a95fa5': {'asset': 'f3CRV', 'decimals': 18, 'type': 'timelock',},
+  '0x0FE4283e0216F94f5f9750a7a11AC54D3c9C38F3': {'asset': 'fYCRV', 'decimals': 18, 'type': 'timelock',},
 }
 
 CHADISMS = [
@@ -192,6 +205,7 @@ def handle_event(event):
   print(event)
   msg = ''
   tweet = False
+  color = None
   # UNISWAP TRADE
   if event.address == unipool_addr:
     if txhash in txids_seen:
@@ -205,6 +219,7 @@ def handle_event(event):
     price = unirouter_contract.functions['quote'](ONE_18DEC, poolvals[0], poolvals[1]).call(block_identifier=blocknum)*10**-6
     # build message
     if farmbuy > 0:
+      color = 32768
       pricechange = 100 * farmbuy / ( poolvals[0] * 10**-18)
       if pricechange < 1.0:
         return
@@ -213,6 +228,7 @@ def handle_event(event):
              f'`{farmbuy:,.2f}` FARM was [bought](<https://etherscan.io/tx/{txhash}>)!'
              )
     if farmsell > 0:
+      color = 16711680
       pricechange = 100 * farmsell / ( poolvals[0] * 10**-18)
       if pricechange < 1.0:
         return
@@ -222,6 +238,7 @@ def handle_event(event):
              )
   # VAULT EVENT
   elif event.address in vaults.keys():
+    color = 16711680
     event_name = event.event
     new_strategy = event.args.newStrategy
     vault_name = vaults.get(event.address, {'asset':'asset'})['asset']
@@ -240,6 +257,7 @@ def handle_event(event):
     tweet = f'🧭  {event_name} for @harvest_finance {vault_name}; earliest effective {dt_activated} https://etherscan.io/tx/{txhash}'
   # HARVEST
   else:
+    color = 16776960
     shareprice_decimals = vaults.get(event.args.vault, {'decimals':'0'})['decimals']
     shareprice = event.args.newSharePrice * ( 10 ** ( -1 * shareprice_decimals ) )
     shareprice_delta = (event.args.newSharePrice - event.args.oldSharePrice) / event.args.oldSharePrice
@@ -252,21 +270,26 @@ def handle_event(event):
     token_farm_logs = token_farm_contract.events.Transfer().processReceipt(receipt, errors=DISCARD)
     for xfr in token_farm_logs:
       if xfr.address == TOKEN_FARM_ADDR and (xfr.args.to == PROFITSHARE_V2_ADDR or xfr.args.to == PROFITSHARE_V3_ADDR):
-        farm_xfrs += (f':farmer: FARM to profit share: `{xfr.args.value*10**-18}`\n')
+        farm_xfrs += (f'\n:farmer: FARM to profit share: `{xfr.args.value*10**-18}`')
     msg =  (f':tractor: At `{dt} GMT`, did `HardWork` on [{asset}](<https://etherscan.io/tx/{txhash}>)\n'
             f':tools: Using the [{strat_name}](<https://etherscan.io/address/{strat_addr}#code>)!\n'
-            f':chart_with_upwards_trend: Share price changes `{round(100*shareprice_delta,4):.4f}%` to `{round(shareprice,6):.6f}`!\n'
+            f':chart_with_upwards_trend: Share price changes `{round(100*shareprice_delta,4):.4f}%` to `{round(shareprice,6):.6f}`!'
             f'{farm_xfrs}'
-            f'<:chadright:758033272101011622> {random.choice(CHADISMS)}.'
+            f' <:chadright:758033272101011622> {random.choice(CHADISMS)}.'
             )
-  send_msg(msg, tweet)
+  send_msg(msg, tweet, color)
   txids_seen.append(txhash)
 
-def send_msg(msg, tweet):
-  json_payload = {'content': msg, 'embeds': [],}
-  print(msg)
+def send_msg(msg, tweet, color=None):
+  data = {}
+  data['embeds'] = []
+  embed = {}
+  #embed['title'] = ":chains::mag: On-chain event detected!"
+  embed['description'] = msg
+  if color: embed['color'] = color
+  data['embeds'].append(embed)
   if POST_TO_DISCORD == 'True' and len(msg) > 0:
-    requests.post(WEBHOOK_URL, json_payload)
+    requests.post(WEBHOOK_URL, json.dumps(data), headers={"Content-Type": "Application/json"})
   if tweet:
     try:
       print(msg)
