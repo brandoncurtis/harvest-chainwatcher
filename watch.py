@@ -49,6 +49,8 @@ ONE_18DEC = 1000000000000000000
 w3 = Web3(Web3.HTTPProvider(NODE_URL))
 
 controller_addr = '0x222412af183BCeAdEFd72e4Cb1b71f1889953b1C'
+unipool_weth_usdt_addr = '0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852'
+
 unipool_usdc_farm_addr = '0x514906FC121c7878424a5C928cad1852CC545892'
 unipool_weth_farm_addr = '0x56feAccb7f750B997B36A68625C7C596F0B41A58'
 unirouter_addr = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
@@ -196,6 +198,8 @@ api = twitter.Api(consumer_key=consumer_key, consumer_secret=consumer_secret,
 # Smart Contracts
 token_farm_contract = w3.eth.contract(address=TOKEN_FARM_ADDR, abi=TOKEN_FARM_ABI)
 controller_contract = w3.eth.contract(address=controller_addr, abi=CONTROLLER_ABI)
+unipool_weth_usdt_contract = w3.eth.contract(address=unipool_weth_usdt_addr, abi=UNIPOOL_ABI)
+
 unipool_usdc_farm_contract = w3.eth.contract(address=unipool_usdc_farm_addr, abi=UNIPOOL_ABI)
 unipool_weth_farm_contract = w3.eth.contract(address=unipool_weth_farm_addr, abi=UNIPOOL_ABI)
 unirouter_contract = w3.eth.contract(address=unirouter_addr, abi=UNIROUTER_ABI)
@@ -262,18 +266,12 @@ def handle_event(event):
       pricechange = 100 * farmbuy / ( poolvals[0] * 10**-18)
       if pricechange < 1.0:
         return
-      response = requests.get(f'https://api.etherscan.io/api?module=stats&action=ethprice&apikey={ETHERSCAN_API_KEY}')
-      data = response.json()
-      ethUsd = data['result']['ethusd']
-      priceString = ''
-      if response.status_code != 200:
-        priceString = f'`{price:,.2f} WETH`'
-      else:
-        price = price * float(ethUsd)
-        priceString = f'`${price:,.2f}`'
+      ethReserve = unipool_weth_usdt_contract.functions['getReserves']().call()
+      priceEth = unirouter_contract.functions['quote'](ONE_18DEC, ethReserve[0], ethReserve[1]).call()*10**-6
+      price *= float(priceEth)
       msg = (f':cheese: **WETH/FARM Pool**\n\n'
              f':chart_with_upwards_trend: At block `{blocknum}`, '
-             f'`+{pricechange:.4f}%`:evergreen_tree: to `{priceString}`; '
+             f'`+{pricechange:.4f}%`:evergreen_tree: to `${price:,.2f}`; '
              f'`{farmbuy:,.2f}` FARM was [bought](<https://etherscan.io/tx/{txhash}>) by [{sender}](<https://etherscan.io/address/{sender}>)!'
              )
     if farmsell > 0:
@@ -281,18 +279,12 @@ def handle_event(event):
       pricechange = 100 * farmsell / ( poolvals[0] * 10**-18)
       if pricechange < 1.0:
         return
-      response = requests.get(f'https://api.etherscan.io/api?module=stats&action=ethprice&apikey={ETHERSCAN_API_KEY}')
-      data = response.json()
-      ethUsd = data['result']['ethusd']      
-      priceString = ''
-      if response.status_code != 200:
-        priceString = f'`{price:,.2f} WETH`'
-      else:
-        price = price * float(ethUsd)
-        priceString = f'`${price:,.2f}`'
+      ethReserve = unipool_weth_usdt_contract.functions['getReserves']().call()
+      priceEth = unirouter_contract.functions['quote'](ONE_18DEC, ethReserve[0], ethReserve[1]).call()*10**-6
+      price *= float(priceEth)
       msg = (f':cheese: **WETH/FARM Pool**\n\n'
              f':chart_with_downwards_trend: At block `{blocknum}`, '
-             f'`-{pricechange:.4f}%`:small_red_triangle_down: to `{priceString}`; '
+             f'`-{pricechange:.4f}%`:small_red_triangle_down: to `${price:,.2f}`; '
              f'`{farmsell:,.2f}` FARM was [sold](<https://etherscan.io/tx/{txhash}>) by [{sender}](<https://etherscan.io/address/{sender}>)!'
              )
   # VAULT EVENT
@@ -379,7 +371,7 @@ def main():
   if LOOKBACK_HARVESTS == 'True':
     lookback_filters.append(controller_contract.events.SharePriceChangeLog.createFilter(fromBlock=START_BLOCK))
   if LOOKBACK_TRADES == 'True':
-    # lookback_filters.append(unipool_usdc_farm_contract.events.Swap.createFilter(fromBlock=START_BLOCK))
+    lookback_filters.append(unipool_usdc_farm_contract.events.Swap.createFilter(fromBlock=START_BLOCK))
     lookback_filters.append(unipool_weth_farm_contract.events.Swap.createFilter(fromBlock=START_BLOCK))
   if LOOKBACK_STRATEGIES == 'True':
     for vault in vaults:
