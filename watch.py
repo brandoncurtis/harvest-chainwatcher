@@ -42,13 +42,15 @@ PROFITSHARE_V2_ADDR = os.getenv("PROFITSHARE_V2_ADDR")
 PROFITSHARE_V3_ADDR = os.getenv("PROFITSHARE_V3_ADDR")
 UNIPOOL_ABI = os.getenv("UNIPOOL_ABI")
 UNIROUTER_ABI = os.getenv("UNIROUTER_ABI")
+ETHERSCAN_API_KEY = os.getenv("ETHERSCAN_API_KEY")
 # CONSTANTS
 ONE_18DEC = 1000000000000000000
 
 w3 = Web3(Web3.HTTPProvider(NODE_URL))
 
 controller_addr = '0x222412af183BCeAdEFd72e4Cb1b71f1889953b1C'
-unipool_addr = '0x514906FC121c7878424a5C928cad1852CC545892'
+unipool_usdc_farm_addr = '0x514906FC121c7878424a5C928cad1852CC545892'
+unipool_weth_farm_addr = '0x56feAccb7f750B997B36A68625C7C596F0B41A58'
 unirouter_addr = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
 
 strats = {
@@ -194,7 +196,8 @@ api = twitter.Api(consumer_key=consumer_key, consumer_secret=consumer_secret,
 # Smart Contracts
 token_farm_contract = w3.eth.contract(address=TOKEN_FARM_ADDR, abi=TOKEN_FARM_ABI)
 controller_contract = w3.eth.contract(address=controller_addr, abi=CONTROLLER_ABI)
-unipool_contract = w3.eth.contract(address=unipool_addr, abi=UNIPOOL_ABI)
+unipool_usdc_farm_contract = w3.eth.contract(address=unipool_usdc_farm_addr, abi=UNIPOOL_ABI)
+unipool_weth_farm_contract = w3.eth.contract(address=unipool_weth_farm_addr, abi=UNIPOOL_ABI)
 unirouter_contract = w3.eth.contract(address=unirouter_addr, abi=UNIROUTER_ABI)
 
 txids_seen = []
@@ -202,39 +205,95 @@ txids_seen = []
 def handle_event(event):
   txhash = event.transactionHash.hex()
   blocknum = event.blockNumber
-  print(event)
+  # print(event)
   msg = ''
   tweet = False
   color = None
-  # UNISWAP TRADE
-  if event.address == unipool_addr:
+  # UNISWAP USDC/FARM TRADE
+  if event.address == unipool_usdc_farm_addr:
+    print('================USDC/FARM pool============')
     if txhash in txids_seen:
       return
     farmsell, farmbuy = int(event.args.amount0In)*10**-18, int(event.args.amount0Out)*10**-18
     usdcsell, usdcbuy = int(event.args.amount1In)*10**-6, int(event.args.amount1Out)*10**-6
     # get price information
     print(f'fetching pool reserves...')
-    poolvals = unipool_contract.functions['getReserves']().call(block_identifier=blocknum)
+    poolvals = unipool_usdc_farm_contract.functions['getReserves']().call(block_identifier=blocknum)
     print(f'calculating price...')
     price = unirouter_contract.functions['quote'](ONE_18DEC, poolvals[0], poolvals[1]).call(block_identifier=blocknum)*10**-6
+    sender = w3.eth.getTransaction(event.transactionHash.hex())['from']
     # build message
     if farmbuy > 0:
       color = 32768
       pricechange = 100 * farmbuy / ( poolvals[0] * 10**-18)
       if pricechange < 1.0:
         return
-      msg = (f':chart_with_upwards_trend: At block `{blocknum}`, '
+      msg = (f':hamburger: **USDC/FARM Pool**\n\n'
+             f':chart_with_upwards_trend: At block `{blocknum}`, '
              f'`+{pricechange:.4f}%`:evergreen_tree: to `${price:,.2f}`; '
-             f'`{farmbuy:,.2f}` FARM was [bought](<https://etherscan.io/tx/{txhash}>)!'
+             f'`{farmbuy:,.2f}` FARM was [bought](<https://etherscan.io/tx/{txhash}>) by [{sender}](<https://etherscan.io/address/{sender}>)!'
              )
     if farmsell > 0:
       color = 16711680
       pricechange = 100 * farmsell / ( poolvals[0] * 10**-18)
       if pricechange < 1.0:
         return
-      msg = (f':chart_with_downwards_trend: At block `{blocknum}`, '
+      msg = (f':hamburger: **USDC/FARM Pool**\n\n'
+             f':chart_with_downwards_trend: At block `{blocknum}`, '
              f'`-{pricechange:.4f}%`:small_red_triangle_down: to `${price:,.2f}`; '
-             f'`{farmsell:,.2f}` FARM was [sold](<https://etherscan.io/tx/{txhash}>)!'
+             f'`{farmsell:,.2f}` FARM was [sold](<https://etherscan.io/tx/{txhash}>) by [{sender}](<https://etherscan.io/address/{sender}>)!'
+             )
+  # UNISWAP WETH/FARM TRADE
+  elif event.address == unipool_weth_farm_addr:
+    print('================WETH/FARM pool============')
+    if txhash in txids_seen:
+      return
+    farmsell, farmbuy = int(event.args.amount0In)*10**-18, int(event.args.amount0Out)*10**-18
+    wethsell, wethbuy = int(event.args.amount1In)*10**-18, int(event.args.amount1Out)*10**-18
+    # get price information
+    print(f'fetching pool reserves...')
+    poolvals = unipool_weth_farm_contract.functions['getReserves']().call(block_identifier=blocknum)
+    print(f'calculating price...')
+    price = unirouter_contract.functions['quote'](ONE_18DEC, poolvals[0], poolvals[1]).call(block_identifier=blocknum)*10**-18
+    sender = w3.eth.getTransaction(event.transactionHash.hex())['from']
+    # build message
+    if farmbuy > 0:
+      color = 32768
+      pricechange = 100 * farmbuy / ( poolvals[0] * 10**-18)
+      if pricechange < 1.0:
+        return
+      response = requests.get(f'https://api.etherscan.io/api?module=stats&action=ethprice&apikey={ETHERSCAN_API_KEY}')
+      data = response.json()
+      ethUsd = data['result']['ethusd']
+      priceString = ''
+      if response.status_code != 200:
+        priceString = f'`{price:,.2f} WETH`'
+      else:
+        price = price * float(ethUsd)
+        priceString = f'`${price:,.2f}`'
+      msg = (f':cheese: **WETH/FARM Pool**\n\n'
+             f':chart_with_upwards_trend: At block `{blocknum}`, '
+             f'`+{pricechange:.4f}%`:evergreen_tree: to `{priceString}`; '
+             f'`{farmbuy:,.2f}` FARM was [bought](<https://etherscan.io/tx/{txhash}>) by [{sender}](<https://etherscan.io/address/{sender}>)!'
+             )
+    if farmsell > 0:
+      color = 16711680
+      pricechange = 100 * farmsell / ( poolvals[0] * 10**-18)
+      if pricechange < 1.0:
+        return
+      response = requests.get(f'https://api.etherscan.io/api?module=stats&action=ethprice&apikey={ETHERSCAN_API_KEY}')
+      data = response.json()
+      ethUsd = data['result']['ethusd']      
+      priceString = ''
+      if response.status_code != 200:
+        priceString = f'`{price:,.2f} WETH`'
+      else:
+        price = price * float(ethUsd)
+        priceString = f'`${price:,.2f}`'
+      msg = (f':cheese: **WETH/FARM Pool**\n\n'
+             f':chart_with_downwards_trend: At block `{blocknum}`, '
+             f'`-{pricechange:.4f}%`:small_red_triangle_down: to `{priceString}`; '
+             f'`{farmsell:,.2f}` FARM was [sold](<https://etherscan.io/tx/{txhash}>) by [{sender}](<https://etherscan.io/address/{sender}>)!'
              )
   # VAULT EVENT
   elif event.address in vaults.keys():
@@ -259,7 +318,7 @@ def handle_event(event):
   else:
     color = 16776960
     shareprice_decimals = vaults.get(event.args.vault, {'decimals':'0'})['decimals']
-    shareprice = event.args.newSharePrice * ( 10 ** ( -1 * shareprice_decimals ) )
+    shareprice = event.args.newSharePrice * ( 10 ** ( -1 * int(shareprice_decimals) ) )
     shareprice_delta = (event.args.newSharePrice - event.args.oldSharePrice) / event.args.oldSharePrice
     asset = vaults.get(event.args.vault, {'asset':'assets'})['asset']
     strat_addr = event.args.strategy
@@ -276,7 +335,7 @@ def handle_event(event):
             f':chart_with_upwards_trend: Share price changes `{round(100*shareprice_delta,4):.4f}%` to `{round(shareprice,6):.6f}`!'
             f'{farm_xfrs}'
             f' <:chadright:758033272101011622> {random.choice(CHADISMS)}.'
-            )
+            )      
   send_msg(msg, tweet, color)
   txids_seen.append(txhash)
 
@@ -301,7 +360,7 @@ def send_msg(msg, tweet, color=None):
 def log_lookback(event_filters):
   print(f'Starting log lookback at {START_BLOCK}...')
   for n, event_filter in enumerate(event_filters, 1):
-    print(f'Starting log looback on contract {n}...')
+    print(f'Starting log lookback on contract {n}...')
     for event in event_filter.get_all_entries():
       handle_event(event)
   print('Lookback complete!')
@@ -320,7 +379,8 @@ def main():
   if LOOKBACK_HARVESTS == 'True':
     lookback_filters.append(controller_contract.events.SharePriceChangeLog.createFilter(fromBlock=START_BLOCK))
   if LOOKBACK_TRADES == 'True':
-    lookback_filters.append(unipool_contract.events.Swap.createFilter(fromBlock=START_BLOCK))
+    # lookback_filters.append(unipool_usdc_farm_contract.events.Swap.createFilter(fromBlock=START_BLOCK))
+    lookback_filters.append(unipool_weth_farm_contract.events.Swap.createFilter(fromBlock=START_BLOCK))
   if LOOKBACK_STRATEGIES == 'True':
     for vault in vaults:
       if vaults.get(vault).get('type', '') == 'timelock':
@@ -336,7 +396,8 @@ def main():
     print('watching for new events...')
     loop = asyncio.get_event_loop()
     event_filters.append(controller_contract.events.SharePriceChangeLog.createFilter(fromBlock='latest'))
-    event_filters.append(unipool_contract.events.Swap.createFilter(fromBlock='latest'))
+    event_filters.append(unipool_usdc_farm_contract.events.Swap.createFilter(fromBlock='latest'))
+    event_filters.append(unipool_weth_farm_contract.events.Swap.createFilter(fromBlock='latest'))
     for vault in vaults:
       if vaults.get(vault).get('type', '') == 'timelock':
         vault_contract = w3.eth.contract(address=vault, abi=VAULT_TIMELOCK_ABI)
