@@ -266,8 +266,7 @@ def handle_event(event):
       pricechange = 100 * farmbuy / ( poolvals[0] * 10**-18)
       if pricechange < 1.0:
         return
-      ethReserve = unipool_weth_usdt_contract.functions['getReserves']().call()
-      priceEth = unirouter_contract.functions['quote'](ONE_18DEC, ethReserve[0], ethReserve[1]).call()*10**-6
+      priceEth = getWETHPrice(blocknum)
       price *= float(priceEth)
       msg = (f':cheese: **WETH/FARM Pool**\n\n'
              f':chart_with_upwards_trend: At block `{blocknum}`, '
@@ -279,8 +278,7 @@ def handle_event(event):
       pricechange = 100 * farmsell / ( poolvals[0] * 10**-18)
       if pricechange < 1.0:
         return
-      ethReserve = unipool_weth_usdt_contract.functions['getReserves']().call()
-      priceEth = unirouter_contract.functions['quote'](ONE_18DEC, ethReserve[0], ethReserve[1]).call()*10**-6
+      priceEth = getWETHPrice(blocknum)
       price *= float(priceEth)
       msg = (f':cheese: **WETH/FARM Pool**\n\n'
              f':chart_with_downwards_trend: At block `{blocknum}`, '
@@ -364,6 +362,11 @@ async def log_loop(event_filters, poll_interval):
       for event in event_filter.get_new_entries():
         handle_event(event)
     await asyncio.sleep(poll_interval)
+
+def getWETHPrice(blocknum):
+    ethReserve = unipool_weth_usdt_contract.functions['getReserves']().call(block_identifier=blocknum)
+    priceEth = unirouter_contract.functions['quote'](ONE_18DEC, ethReserve[0], ethReserve[1]).call(block_identifier=blocknum)*10**-6
+    return priceEth
 
 def main():
   # set up lookback
