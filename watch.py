@@ -94,6 +94,11 @@ strats = {
   '0xE715458Cd3ba5377487822F748BE1a5b994Db436': 'NoopStrategyStable',
   '0xABcEa95e3603C0604C81c2d95ED3aBD91c013aE6': 'NoopStrategyStable',
   '0x3952555B3Be488F51f0b03315a85560a83c24E04': 'CRVStrategyWRenBTCMixMainnet',
+  '0xa89CBbE676562EbD0728E6cFA431DeBe77184090': 'SNXRewardUniLPStrategy_BAC_DAI',
+  '0xA9cA706797702a50ea76aC9920774c8E982E4436': 'SNXRewardUniLPStrategy_DAI_BAS',
+  '0xa81363950847aC250A2165D9Fb2513cA0895E786': 'SNXRewardUniLPStrategy_MIC_USDT',
+  '0x940db279d149de71FDa27fA057936265A92d8d7e': 'SNXRewardUniLPStrategy_MIS_USDT',
+  
 }
 
 vaults = {
@@ -124,6 +129,12 @@ vaults = {
   '0x9aA8F427A17d6B0d91B6262989EdC7D45d6aEdf8': {'asset': 'fCRVRENWBTC', 'decimals': 18, 'type': 'timelock',},
   '0x71B9eC42bB3CB40F017D8AD8011BE8e384a95fa5': {'asset': 'f3CRV', 'decimals': 18, 'type': 'timelock',},
   '0x0FE4283e0216F94f5f9750a7a11AC54D3c9C38F3': {'asset': 'fYCRV', 'decimals': 18, 'type': 'timelock',},
+  '0x6Bccd7E983E438a56Ba2844883A664Da87E4C43b': {'asset': 'fUNI-BAC-DAI', 'decimals': 18, 'type': 'timelock',},
+  '0xf8b7235fcfd5a75cfdcc0d7bc813817f3dd17858': {'asset': 'fUNI-DAI-BAS', 'decimals': 18, 'type': 'timelock',},
+  '0x6F14165c6D529eA3Bfe1814d0998449e9c8D157D': {'asset': 'fSUSHI-MIC-USDT', 'decimals': 18, 'type': 'timelock',},
+  '0x145f39B3c6e6a885AA6A8fadE4ca69d64bab69c8': {'asset': 'fSUSHI-MIS-USDT', 'decimals': 18, 'type': 'timelock',},
+
+  
 }
 
 CHADISMS = [
