@@ -31,6 +31,7 @@ LOOKBACK = os.getenv("LOOKBACK")
 LOOKBACK_TRADES = os.getenv("LOOKBACK_TRADES")
 LOOKBACK_HARVESTS = os.getenv("LOOKBACK_HARVESTS")
 LOOKBACK_STRATEGIES = os.getenv("LOOKBACK_STRATEGIES")
+LOOKBACK_BURNS = os.getenv("LOOKBACK_BURNS")
 WATCH = os.getenv("WATCH")
 # CONTRACTS
 CONTROLLER_ABI = os.getenv("CONTROLLER_ABI")
@@ -44,12 +45,15 @@ UNIPOOL_ABI = os.getenv("UNIPOOL_ABI")
 UNIROUTER_ABI = os.getenv("UNIROUTER_ABI")
 # CONSTANTS
 ONE_18DEC = 1000000000000000000
+ZERO_ADDR = "0x0000000000000000000000000000000000000000"
 
-w3 = Web3(Web3.HTTPProvider(NODE_URL))
+w3 = Web3(Web3.HTTPProvider(NODE_URL, request_kwargs={'timeout': 120}))
 
 controller_addr = '0x222412af183BCeAdEFd72e4Cb1b71f1889953b1C'
 unipool_addr = '0x514906FC121c7878424a5C928cad1852CC545892'
 unirouter_addr = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
+grain_addr = '0x6589fe1271A0F29346796C6bAf0cdF619e25e58e'
+GRAIN_SUPPLY = 30938628.224397507
 
 strats = {
   '0xCf5F83F8FE0AB0f9E9C1db07E6606dD598b2bbf5': 'Swerve CRVStrategyYCRVMainnet v1',
@@ -94,6 +98,32 @@ strats = {
   '0xE715458Cd3ba5377487822F748BE1a5b994Db436': 'NoopStrategyStable',
   '0xABcEa95e3603C0604C81c2d95ED3aBD91c013aE6': 'NoopStrategyStable',
   '0x3952555B3Be488F51f0b03315a85560a83c24E04': 'CRVStrategyWRenBTCMixMainnet',
+  '0xFDE5dfb79d4A65913CB72ddd9148a768705e98D4': 'IdleStrategyDAIMainnet',
+  '0x1a69F857103De1B531Ab7CF935Ffc6a46C2e488c': 'IdleStrategyTUSDMainnet',
+  '0x93ceE333C690CB91c39AC7B3294740651DC79C3d': 'IdleStrategyUSDCMainnet',
+  '0x49938D0E7Ab1F224Ac091058e8638e4b8DA08dA6': 'IdleStrategyUSDTMainnet',
+  '0x6561E55A43545BCC9EAE3202F3075b3Dc5283E90': 'IdleStrategyWBTCMainnet',
+  '0x0623cF5D4cD761E2C237fB02d1FA6424e03f5c8C': 'CRVStrategy3PoolMainnet',
+  '0x6945F180b339825AC734649c12A1557e93b2b73A': 'CRVStrategyYCRVMainnet',
+  '0x1825a0013E030DD668C5e4a00AE76Fb6E94687f6': 'CRVStrategyCompoundMainnet',
+  '0x50f3cfb398A25A5918B27c77465e9C3EdE7888B7': 'CRVStrategyUSDNMainnet',
+  '0x2b7CAA7D87c01152A82c266791AdA69CcFe64045': 'CRVStrategyBUSDMainnet',
+  '0xE26d94dED203F5402882D19fEf92Ee04f6b73ef9': 'CRVStrategyTBTCMixedMainnet',
+  '0x1Dcaf36c8c4222139899690945f4382f298f8735': 'CompoundWETHFoldStrategyMainnet',
+  '0x7f522f8619018F6D905A670830800903bCee544d': 'SNXRewardUniLPStrategy',
+  '0x180A71C5688AC7e2368890ef77B0036Af8e261b6': 'StrategyProxy',
+  '0x895CC1b32Aa6f5FEdf0E113eAC556309Ad225322': 'StrategyProxy',
+  '0xd5d2ADcb5e6ad20425B0650E4050c0eA9ec3cEC0': 'StrategyProxy',
+  '0xdD1dFbB5A580e96C2723cCAF687227900F97F053': 'StrategyProxy',
+  '0x5E10a2A23393118306ccE080E3D3fc5447d0151b': 'CRVStrategyHBTCMainnet',
+  '0x5905569D78ED1fA22299eab74ef0443D02B40000': 'CRVStrategyHUSDMainnet',
+  '0x5DB1B2128bCCC5B49f9cA7E3086b14fd4cf2ef64': 'CompoundNoFoldStrategyUSDCMainnet',
+  '0xDA9A3F634eDE5DE46ea3B7BBFc6a811C4AeBe737': 'CompoundNoFoldStrategyUSDTMainnet',
+  '0x180c496709023CE8952003A9FF385a3bBEB8b2C3': 'CompoundNoFoldStrategyDAIMainnet',
+  '0xa81363950847aC250A2165D9Fb2513cA0895E786': 'SNXRewardUniLPStrategy_MIC_USDT',
+  '0x940db279d149de71FDa27fA057936265A92d8d7e': 'SNXRewardUniLPStrategy_MIS_USDT',
+  '0xA9cA706797702a50ea76aC9920774c8E982E4436': 'SNXRewardUniLPStrategy_DAI_BAS',
+  '0xa89CBbE676562EbD0728E6cFA431DeBe77184090': 'SNXRewardUniLPStrategy_BAC_DAI',
 }
 
 vaults = {
@@ -113,7 +143,12 @@ vaults = {
   '0x7DDc3ffF0612E75Ea5ddC0d6Bd4e268f70362Cff': {'asset': 'fUNI-ETH-USDT', 'decimals': 18, 'type': 'timelock',},
   '0xA79a083FDD87F73c2f983c5551EC974685D6bb36': {'asset': 'fUNI-ETH-USDC', 'decimals': 18, 'type': 'timelock',},
   '0x307E2752e8b8a9C29005001Be66B1c012CA9CDB7': {'asset': 'fUNI-ETH-DAI', 'decimals': 18, 'type': 'timelock',},
+  '0x2a32dcBB121D48C106F6d94cf2B4714c0b4Dfe48': {'asset': 'fUNI-ETH-DPI', 'decimals': 18, 'type': 'timelock',},
   '0xF553E1f826f42716cDFe02bde5ee76b2a52fc7EB': {'asset': 'fSUSHI-WBTC-TBTC', 'decimals': 18, 'type': 'timelock',},
+  '0x203E97aa6eB65A1A02d9E80083414058303f241E': {'asset': 'fSUSHI-WETH-DAI', 'decimals': 18, 'type': 'timelock',},
+  '0x64035b583c8c694627A199243E863Bb33be60745': {'asset': 'fSUSHI-WETH-USDT', 'decimals': 18, 'type': 'timelock',},
+  '0x01bd09A1124960d9bE04b638b142Df9DF942b04a': {'asset': 'fSUSHI-WETH-USDC', 'decimals': 18, 'type': 'timelock',},
+  '0x5C0A3F55AAC52AA320Ff5F280E77517cbAF85524': {'asset': 'fSUSHI-WETH-WBTC', 'decimals': 18, 'type': 'timelock',},
   '0x7674622c63Bee7F46E86a4A5A18976693D54441b': {'asset': 'fTUSD', 'decimals': 18, 'type': 'timelock',},
   '0xFE09e53A81Fe2808bc493ea64319109B5bAa573e': {'asset': 'fWETH', 'decimals': 18, 'type': 'timelock',},
   '0xab7FA2B2985BCcfC13c6D86b1D5A17486ab1e04C': {'asset': 'fDAI', 'decimals': 18, 'type': 'timelock',},
@@ -121,9 +156,19 @@ vaults = {
   '0x053c80eA73Dc6941F518a68E2FC52Ac45BDE7c9C': {'asset': 'fUSDT', 'decimals': 6, 'type': 'timelock',},
   '0x5d9d25c7C457dD82fc8668FFC6B9746b674d4EcB': {'asset': 'fWBTC', 'decimals': 8, 'type': 'timelock',},
   '0xC391d1b08c1403313B0c28D47202DFDA015633C4': {'asset': 'fRENBTC', 'decimals': 8, 'type': 'timelock',},
-  '0x9aA8F427A17d6B0d91B6262989EdC7D45d6aEdf8': {'asset': 'fCRVRENWBTC', 'decimals': 18, 'type': 'timelock',},
-  '0x71B9eC42bB3CB40F017D8AD8011BE8e384a95fa5': {'asset': 'f3CRV', 'decimals': 18, 'type': 'timelock',},
-  '0x0FE4283e0216F94f5f9750a7a11AC54D3c9C38F3': {'asset': 'fYCRV', 'decimals': 18, 'type': 'timelock',},
+  '0x9aA8F427A17d6B0d91B6262989EdC7D45d6aEdf8': {'asset': 'fCRV-RENWBTC', 'decimals': 18, 'type': 'timelock',},
+  '0x640704D106E79e105FDA424f05467F005418F1B5': {'asset': 'fCRV-TBTC', 'decimals': 18, 'type': 'timelock',},
+  '0x71B9eC42bB3CB40F017D8AD8011BE8e384a95fa5': {'asset': 'fCRV-3POOL', 'decimals': 18, 'type': 'timelock',},
+  '0x0FE4283e0216F94f5f9750a7a11AC54D3c9C38F3': {'asset': 'fCRV-YPOOL', 'decimals': 18, 'type': 'timelock',},
+  '0x683E683fBE6Cf9b635539712c999f3B3EdCB8664': {'asset': 'fCRV-USDN', 'decimals': 18, 'type': 'timelock',},
+  '0x4b1cBD6F6D8676AcE5E412C78B7a59b4A1bbb68a': {'asset': 'fCRV-BUSD', 'decimals': 18, 'type': 'timelock',},
+  '0x998cEb152A42a3EaC1f555B1E911642BeBf00faD': {'asset': 'fCRV-COMP', 'decimals': 18, 'type': 'timelock',},
+  '0x29780C39164Ebbd62e9DDDE50c151810070140f2': {'asset': 'fCRV-HUSD', 'decimals': 18, 'type': 'timelock',},
+  '0xCC775989e76ab386E9253df5B0c0b473E22102E2': {'asset': 'fCRV-HBTC', 'decimals': 18, 'type': 'timelock',},
+  '0x6Bccd7E983E438a56Ba2844883A664Da87E4C43b': {'asset': 'fUNI-BAC-DAI', 'decimals': 18, 'type': 'timelock',},
+  '0xf8b7235fcfd5A75CfDcC0D7BC813817f3Dd17858': {'asset': 'fUNI-BAS-DAI', 'decimals': 18, 'type': 'timelock',},
+  '0x6F14165c6D529eA3Bfe1814d0998449e9c8D157D': {'asset': 'fUNI-MIC-USDT', 'decimals': 18, 'type': 'timelock',},
+  '0x145f39B3c6e6a885AA6A8fadE4ca69d64bab69c8': {'asset': 'fUNI-MIS-USDT', 'decimals': 18, 'type': 'timelock',},
 }
 
 CHADISMS = [
@@ -196,6 +241,7 @@ token_farm_contract = w3.eth.contract(address=TOKEN_FARM_ADDR, abi=TOKEN_FARM_AB
 controller_contract = w3.eth.contract(address=controller_addr, abi=CONTROLLER_ABI)
 unipool_contract = w3.eth.contract(address=unipool_addr, abi=UNIPOOL_ABI)
 unirouter_contract = w3.eth.contract(address=unirouter_addr, abi=UNIROUTER_ABI)
+grain_contract = w3.eth.contract(address=grain_addr, abi=TOKEN_FARM_ABI)
 
 txids_seen = []
 
@@ -206,8 +252,23 @@ def handle_event(event):
   msg = ''
   tweet = False
   color = None
+
+  # GRAIN BURN
+  if event.address == grain_addr:
+    if txhash in txids_seen:
+      return
+    print(f'GRAIN burn detected!')
+    remaining_supply, total_supply = get_burn_stats(blocknum)
+    burner = event.args['from']
+    color = 32768
+    msg = (f':fire: At block `{blocknum}`, '
+           f'`{int(event.args.value)*10**-18:,.3f}` <:grain:784594063499853904> GRAIN was [burned](<https://etherscan.io/tx/{txhash}>)\n'
+           f'by [{burner}](<https://etherscan.io/address/{burner}>)!\n'
+           f'`{total_supply-remaining_supply:,.3f}` of `{total_supply:,.3f}` burned (`{100*(total_supply-remaining_supply)/total_supply:.4f}%` :fire::fire::fire:)'
+           )
+
   # UNISWAP TRADE
-  if event.address == unipool_addr:
+  elif event.address == unipool_addr:
     if txhash in txids_seen:
       return
     farmsell, farmbuy = int(event.args.amount0In)*10**-18, int(event.args.amount0Out)*10**-18
@@ -217,6 +278,7 @@ def handle_event(event):
     poolvals = unipool_contract.functions['getReserves']().call(block_identifier=blocknum)
     print(f'calculating price...')
     price = unirouter_contract.functions['quote'](ONE_18DEC, poolvals[0], poolvals[1]).call(block_identifier=blocknum)*10**-6
+    sender = w3.eth.getTransaction(txhash)['from']
     # build message
     if farmbuy > 0:
       color = 32768
@@ -225,7 +287,8 @@ def handle_event(event):
         return
       msg = (f':chart_with_upwards_trend: At block `{blocknum}`, '
              f'`+{pricechange:.4f}%`:evergreen_tree: to `${price:,.2f}`; '
-             f'`{farmbuy:,.2f}` FARM was [bought](<https://etherscan.io/tx/{txhash}>)!'
+             f'`{farmbuy:,.2f}` FARM was [bought](<https://etherscan.io/tx/{txhash}>)\n'
+             f'by [{sender}](<https://etherscan.io/address/{sender}>)!'
              )
     if farmsell > 0:
       color = 16711680
@@ -234,7 +297,8 @@ def handle_event(event):
         return
       msg = (f':chart_with_downwards_trend: At block `{blocknum}`, '
              f'`-{pricechange:.4f}%`:small_red_triangle_down: to `${price:,.2f}`; '
-             f'`{farmsell:,.2f}` FARM was [sold](<https://etherscan.io/tx/{txhash}>)!'
+             f'`{farmsell:,.2f}` FARM was [sold](<https://etherscan.io/tx/{txhash}>)\n'
+             f'by [{sender}](<https://etherscan.io/address/{sender}>)!'
              )
   # VAULT EVENT
   elif event.address in vaults.keys():
@@ -258,7 +322,7 @@ def handle_event(event):
   # HARVEST
   else:
     color = 16776960
-    shareprice_decimals = vaults.get(event.args.vault, {'decimals':'0'})['decimals']
+    shareprice_decimals = int(vaults.get(event.args.vault, {'decimals':'0'})['decimals'])
     shareprice = event.args.newSharePrice * ( 10 ** ( -1 * shareprice_decimals ) )
     shareprice_delta = (event.args.newSharePrice - event.args.oldSharePrice) / event.args.oldSharePrice
     asset = vaults.get(event.args.vault, {'asset':'assets'})['asset']
@@ -298,6 +362,11 @@ def send_msg(msg, tweet, color=None):
       print('could not tweet')
   time.sleep(1)
 
+def get_burn_stats(blocknum):
+  total_supply = GRAIN_SUPPLY
+  remaining_supply = grain_contract.functions['totalSupply']().call(block_identifier=blocknum)*10**-18
+  return remaining_supply, total_supply
+
 def log_lookback(event_filters):
   print(f'Starting log lookback at {START_BLOCK}...')
   for n, event_filter in enumerate(event_filters, 1):
@@ -321,6 +390,8 @@ def main():
     lookback_filters.append(controller_contract.events.SharePriceChangeLog.createFilter(fromBlock=START_BLOCK))
   if LOOKBACK_TRADES == 'True':
     lookback_filters.append(unipool_contract.events.Swap.createFilter(fromBlock=START_BLOCK))
+  if LOOKBACK_BURNS == 'True':
+      lookback_filters.append(grain_contract.events.Transfer.createFilter(fromBlock=START_BLOCK, argument_filters={"to":ZERO_ADDR}))
   if LOOKBACK_STRATEGIES == 'True':
     for vault in vaults:
       if vaults.get(vault).get('type', '') == 'timelock':
@@ -337,6 +408,7 @@ def main():
     loop = asyncio.get_event_loop()
     event_filters.append(controller_contract.events.SharePriceChangeLog.createFilter(fromBlock='latest'))
     event_filters.append(unipool_contract.events.Swap.createFilter(fromBlock='latest'))
+    event_filters.append(grain_contract.events.Transfer.createFilter(fromBlock='latest', argument_filters={"to":ZERO_ADDR}))
     for vault in vaults:
       if vaults.get(vault).get('type', '') == 'timelock':
         vault_contract = w3.eth.contract(address=vault, abi=VAULT_TIMELOCK_ABI)
