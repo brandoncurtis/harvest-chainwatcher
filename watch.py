@@ -167,8 +167,9 @@ vaults = {
   '0xCC775989e76ab386E9253df5B0c0b473E22102E2': {'asset': 'fCRV-HBTC', 'decimals': 18, 'type': 'timelock',},
   '0x6Bccd7E983E438a56Ba2844883A664Da87E4C43b': {'asset': 'fUNI-BAC-DAI', 'decimals': 18, 'type': 'timelock',},
   '0xf8b7235fcfd5A75CfDcC0D7BC813817f3Dd17858': {'asset': 'fUNI-BAS-DAI', 'decimals': 18, 'type': 'timelock',},
-  '0x6F14165c6D529eA3Bfe1814d0998449e9c8D157D': {'asset': 'fUNI-MIC-USDT', 'decimals': 18, 'type': 'timelock',},
-  '0x145f39B3c6e6a885AA6A8fadE4ca69d64bab69c8': {'asset': 'fUNI-MIS-USDT', 'decimals': 18, 'type': 'timelock',},
+  '0x6F14165c6D529eA3Bfe1814d0998449e9c8D157D': {'asset': 'fSUSHI-MIC-USDT', 'decimals': 18, 'type': 'timelock',},
+  '0x145f39B3c6e6a885AA6A8fadE4ca69d64bab69c8': {'asset': 'fSUSHI-MIS-USDT', 'decimals': 18, 'type': 'timelock',},
+  '0x966A70A4d3719A6De6a94236532A0167d5246c72': {'asset': 'fCRV-OBTC', 'decimals': 18, 'type': 'timelock',},
 }
 
 CHADISMS = [
