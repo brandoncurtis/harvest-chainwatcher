@@ -95,10 +95,14 @@ strats = {
   '0xE715458Cd3ba5377487822F748BE1a5b994Db436': 'NoopStrategyStable',
   '0xABcEa95e3603C0604C81c2d95ED3aBD91c013aE6': 'NoopStrategyStable',
   '0x3952555B3Be488F51f0b03315a85560a83c24E04': 'CRVStrategyWRenBTCMixMainnet',
-  '0xa89CBbE676562EbD0728E6cFA431DeBe77184090': 'SNXRewardUniLPStrategy_BAC_DAI',
-  '0xA9cA706797702a50ea76aC9920774c8E982E4436': 'SNXRewardUniLPStrategy_DAI_BAS',
-  '0xa81363950847aC250A2165D9Fb2513cA0895E786': 'SNXRewardUniLPStrategy_MIC_USDT',
-  '0x940db279d149de71FDa27fA057936265A92d8d7e': 'SNXRewardUniLPStrategy_MIS_USDT',
+  '0xa89CBbE676562EbD0728E6cFA431DeBe77184090': 'SNXRewardUniLPStrategy-BAC-DAI',
+  '0xA9cA706797702a50ea76aC9920774c8E982E4436': 'SNXRewardUniLPStrategy-DAI-BAS',
+  '0xa81363950847aC250A2165D9Fb2513cA0895E786': 'SNXRewardUniLPStrategy-MIC-USDT',
+  '0x940db279d149de71FDa27fA057936265A92d8d7e': 'SNXRewardUniLPStrategy-MIS-USDT',
+  '0xb97fdc1c48abc7f25605118e6b4842dc57e666af': 'OneInchStrategy-ETH-DAI',
+  '0x8ea2db065f74064daf96ab1af9637131d5fa4d95': 'OneInchStrategy-ETH-USDC',
+  '0x67729651D5B265b0AD3e009437A71396Ae33eb83': 'OneInchStrategy-ETH-USDT',
+  '0x15aDA3630227a33751e986F3E77b0a073f77d17d': 'OneInchStrategy-ETH-WBTC'
   
 }
 
@@ -135,7 +139,10 @@ vaults = {
   '0xf8b7235fcfd5a75cfdcc0d7bc813817f3dd17858': {'asset': 'fUNI-DAI-BAS', 'decimals': 18, 'type': 'timelock',},
   '0x6F14165c6D529eA3Bfe1814d0998449e9c8D157D': {'asset': 'fSUSHI-MIC-USDT', 'decimals': 18, 'type': 'timelock',},
   '0x145f39B3c6e6a885AA6A8fadE4ca69d64bab69c8': {'asset': 'fSUSHI-MIS-USDT', 'decimals': 18, 'type': 'timelock',},
-
+  '0x8e53031462E930827a8d482e7d80603B1f86e32d': {'asset': 'f1LP-ETH-DAI', 'decimals': 18, 'type': 'timelock',},
+  '0xD162395C21357b126C5aFED6921BC8b13e48D690': {'asset': 'f1LP-ETH-USDC', 'decimals': 18, 'type': 'timelock',},
+  '0x4bf633A09bd593f6fb047Db3B4C25ef5B9C5b99e': {'asset': 'f1LP-ETH-USDT', 'decimals': 18, 'type': 'timelock',},
+  '0x859222DD0B249D0ea960F5102DaB79B294d6874a': {'asset': 'f1LP-ETH-WBTC', 'decimals': 18, 'type': 'timelock',},
   
 }
 
