@@ -172,6 +172,10 @@ vaults = {
   '0x6F14165c6D529eA3Bfe1814d0998449e9c8D157D': {'asset': 'fSUSHI-MIC-USDT', 'decimals': 18, 'type': 'timelock',},
   '0x145f39B3c6e6a885AA6A8fadE4ca69d64bab69c8': {'asset': 'fSUSHI-MIS-USDT', 'decimals': 18, 'type': 'timelock',},
   '0x966A70A4d3719A6De6a94236532A0167d5246c72': {'asset': 'fCRV-OBTC', 'decimals': 18, 'type': 'timelock',},
+  '0x8e53031462E930827a8d482e7d80603B1f86e32d': {'asset': 'f1INCH-ETH:DAI', 'decimals': 18, 'type': 'timelock',},
+  '0x859222DD0B249D0ea960F5102DaB79B294d6874a': {'asset': 'f1INCH-ETH:WBTC', 'decimals': 18, 'type': 'timelock',},
+  '0x4bf633A09bd593f6fb047Db3B4C25ef5B9C5b99e': {'asset': 'f1INCH-ETH:USDT', 'decimals': 18, 'type': 'timelock',},
+  '0xD162395C21357b126C5aFED6921BC8b13e48D690': {'asset': 'f1INCH-ETH:USDC', 'decimals': 18, 'type': 'timelock',},
 }
 
 CHADISMS = [
