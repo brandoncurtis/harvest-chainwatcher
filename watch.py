@@ -49,12 +49,12 @@ ZERO_ADDR = "0x0000000000000000000000000000000000000000"
 
 w3 = Web3(Web3.HTTPProvider(NODE_URL, request_kwargs={'timeout': 120}))
 
-controller_addr = '0x222412af183BCeAdEFd72e4Cb1b71f1889953b1C'
-unipool_addr_usdc = '0x514906FC121c7878424a5C928cad1852CC545892'
-unipool_addr_eth = '0x56feAccb7f750B997B36A68625C7C596F0B41A58'
-unipool_addr_usdceth = '0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc'
-unirouter_addr = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
-grain_addr = '0x6589fe1271A0F29346796C6bAf0cdF619e25e58e'
+CONTROLLER_ADDR = '0x222412af183BCeAdEFd72e4Cb1b71f1889953b1C'
+UNIPOOL_FARM_USDC_ADDR = '0x514906FC121c7878424a5C928cad1852CC545892'
+UNIPOOL_FARM_ETH_ADDR = '0x56feAccb7f750B997B36A68625C7C596F0B41A58'
+UNIPOOL_USDC_ETH_ADDR = '0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc'
+UNIROUTER_ADDR = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
+GRAIN_ADDR = '0x6589fe1271A0F29346796C6bAf0cdF619e25e58e'
 GRAIN_SUPPLY = 30938628.224397507
 
 strats = {
@@ -184,7 +184,6 @@ CHADISMS = [
 ]
 
 # TWITTER CONFIG
-
 def GetConsumerKeyEnv():
   return os.environ.get("TWEETUSERNAME", None)
 
@@ -217,7 +216,7 @@ class TweetRc(object):
     try:
       return self._GetConfig().get('Tweet', option)
     except:
-            return None
+      return None
 
   def _GetConfig(self):
     if not self._config:
@@ -241,52 +240,52 @@ api = twitter.Api(consumer_key=consumer_key, consumer_secret=consumer_secret,
 
 # Smart Contracts
 token_farm_contract = w3.eth.contract(address=TOKEN_FARM_ADDR, abi=TOKEN_FARM_ABI)
-controller_contract = w3.eth.contract(address=controller_addr, abi=CONTROLLER_ABI)
-unipool_eth_contract = w3.eth.contract(address=unipool_addr_eth, abi=UNIPOOL_ABI)
-unipool_usdc_contract = w3.eth.contract(address=unipool_addr_usdc, abi=UNIPOOL_ABI)
-unipool_usdceth_contract = w3.eth.contract(address=unipool_addr_usdceth, abi=UNIPOOL_ABI)
-unirouter_contract = w3.eth.contract(address=unirouter_addr, abi=UNIROUTER_ABI)
-grain_contract = w3.eth.contract(address=grain_addr, abi=TOKEN_FARM_ABI)
+controller_contract = w3.eth.contract(address=CONTROLLER_ADDR, abi=CONTROLLER_ABI)
+unipool_eth_contract = w3.eth.contract(address=UNIPOOL_FARM_ETH_ADDR, abi=UNIPOOL_ABI)
+unipool_usdc_contract = w3.eth.contract(address=UNIPOOL_FARM_USDC_ADDR, abi=UNIPOOL_ABI)
+unipool_usdceth_contract = w3.eth.contract(address=UNIPOOL_USDC_ETH_ADDR, abi=UNIPOOL_ABI)
+unirouter_contract = w3.eth.contract(address=UNIROUTER_ADDR, abi=UNIROUTER_ABI)
+grain_contract = w3.eth.contract(address=GRAIN_ADDR, abi=TOKEN_FARM_ABI)
 
 txids_seen = []
 
 def handle_event(event):
   txhash = event.transactionHash.hex()
   blocknum = event.blockNumber
+  sender = w3.eth.getTransaction(txhash)['from']
   #print(event)
   msg = ''
   tweet = False
   color = None
 
   # GRAIN BURN
-  if event.address == grain_addr:
+  if event.address == GRAIN_ADDR:
     if txhash in txids_seen:
       return
-    print(f'GRAIN burn detected!')
+    print(f'event: GRAIN burn')
     remaining_supply, total_supply = get_burn_stats(blocknum)
-    burner = event.args['from']
+    burner_addr = event.args['from']
     color = 32768
     msg = (f':fire: At block `{blocknum}`, '
            f'`{int(event.args.value)*10**-18:,.3f}` <:grain:784594063499853904> GRAIN was [burned](<https://etherscan.io/tx/{txhash}>)\n'
-           f'by [{burner}](<https://etherscan.io/address/{burner}>)!\n'
+           f'by [{burner}](<https://etherscan.io/address/{burner_addr}>)!\n'
            f'`{total_supply-remaining_supply:,.3f}` of `{total_supply:,.3f}` burned (`{100*(total_supply-remaining_supply)/total_supply:.4f}%` :fire::fire::fire:)'
            )
 
   # UNISWAP TRADE, USDC
-  elif event.address == unipool_addr_usdc:
+  elif event.address == UNIPOOL_FARM_USDC_ADDR:
     if txhash in txids_seen:
       return
-    print(f'FARM trade in the FARM:USDC Uniswap pool')
+    print(f'event: FARM trade in the FARM:USDC Uniswap pool')
     farmsell, farmbuy = int(event.args.amount0In)*10**-18, int(event.args.amount0Out)*10**-18
     usdcsell, usdcbuy = int(event.args.amount1In)*10**-6, int(event.args.amount1Out)*10**-6
-    sender = w3.eth.getTransaction(txhash)['from']
     # get price information
     print(f'fetching pool reserves...')
     poolvals = unipool_usdc_contract.functions['getReserves']().call(block_identifier=blocknum)
     poolvals_eth = unipool_usdc_contract.functions['getReserves']().call(block_identifier=blocknum)
     print(f'calculating price...')
     price = unirouter_contract.functions['quote'](ONE_18DEC, poolvals[0], poolvals[1]).call(block_identifier=blocknum)*10**-6
-    print(f'price of FARM via FARM:USDC: {price} USDC')
+    print(f'price of FARM: ${price}')
     # build message
     if farmbuy > 0:
       color = 32768
@@ -310,23 +309,20 @@ def handle_event(event):
              )
 
   # UNISWAP TRADE, ETH
-  elif event.address == unipool_addr_eth:
+  elif event.address == UNIPOOL_FARM_ETH_ADDR:
     if txhash in txids_seen:
       return
-    print(f'FARM trade in the FARM:ETH Uniswap pool')
+    print(f'event: FARM trade in the FARM:ETH Uniswap pool')
     farmsell, farmbuy = int(event.args.amount0In)*10**-18, int(event.args.amount0Out)*10**-18
     ethsell, ethbuy = int(event.args.amount1In)*10**-18, int(event.args.amount1Out)*10**-18
-    sender = w3.eth.getTransaction(txhash)['from']
     # get price information
-    print(f'fetching pool reserves...')
+    print(f'fetching FARM pool reserves...')
     poolvals = unipool_eth_contract.functions['getReserves']().call(block_identifier=blocknum)
-    poolvals_usdceth = unipool_usdceth_contract.functions['getReserves']().call(block_identifier=blocknum)
     print(f'calculating price...')
-    price_ethusdc = unirouter_contract.functions['quote'](ONE_18DEC, poolvals_usdceth[1], poolvals_usdceth[0]).call(block_identifier=blocknum)*10**-6
-    price_eth = unirouter_contract.functions['quote'](ONE_18DEC, poolvals[0], poolvals[1]).call(block_identifier=blocknum)*10**-18
-    price = price_eth * price_ethusdc
-    print(f'price of ETH: {price_ethusdc} USDC')
-    print(f'price of FARM via FARM:ETH and USDC:ETH: {price} USDC')
+    price_farm_eth = unirouter_contract.functions['quote'](ONE_18DEC, poolvals[0], poolvals[1]).call(block_identifier=blocknum)*10**-18
+    price_eth_usd = get_ethprice_usd(blocknum)
+    price = price_farm_eth * price_eth_usd
+    print(f'price of FARM: ${price}')
     # build message
     if farmbuy > 0:
       color = 32768
@@ -351,6 +347,7 @@ def handle_event(event):
 
   # VAULT EVENT
   elif event.address in vaults.keys():
+    print(f'event: vault strategy update')
     color = 16711680
     event_name = event.event
     new_strategy = event.args.newStrategy
@@ -368,8 +365,10 @@ def handle_event(event):
            f':alarm_clock: Earliest effective: `{dt_activated}`!'
             )
     tweet = f'🧭  {event_name} for @harvest_finance {vault_name}; earliest effective {dt_activated} https://etherscan.io/tx/{txhash}'
+
   # HARVEST
   else:
+    print(f'event: (probably) HARDWORK on a vault')
     color = 16776960
     shareprice_decimals = int(vaults.get(event.args.vault, {'decimals':'18'})['decimals'])
     shareprice = event.args.newSharePrice * ( 10 ** ( -1 * shareprice_decimals ) )
@@ -411,6 +410,13 @@ def send_msg(msg, tweet, color=None):
       print('could not tweet')
   time.sleep(1)
 
+def get_ethprice_usd(blocknum):
+    print(f'fetching ETH:USDC oracle price...')
+    poolvals_usdc_eth = unipool_usdceth_contract.functions['getReserves']().call(block_identifier=blocknum)
+    price_eth_usdc = unirouter_contract.functions['quote'](ONE_18DEC, poolvals_usdc_eth[1], poolvals_usdc_eth[0]).call(block_identifier=blocknum)*10**-6
+    print(f'price of ETH: {price_eth_usdc} USDC')
+    return price_eth_usdc
+
 def get_burn_stats(blocknum):
   total_supply = GRAIN_SUPPLY
   remaining_supply = grain_contract.functions['totalSupply']().call(block_identifier=blocknum)*10**-18
@@ -419,7 +425,7 @@ def get_burn_stats(blocknum):
 def log_lookback(event_filters):
   print(f'Starting log lookback at {START_BLOCK}...')
   for n, event_filter in enumerate(event_filters, 1):
-    print(f'Starting log looback on contract {n}...')
+    print(f'Starting log lookback on contract {n}...')
     for event in event_filter.get_all_entries():
       handle_event(event)
   print('Lookback complete!')
