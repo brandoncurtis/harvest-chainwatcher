@@ -371,10 +371,10 @@ def handle_event(event):
   # HARVEST
   else:
     color = 16776960
-    shareprice_decimals = int(vaults.get(event.args.vault, {'decimals':'0'})['decimals'])
+    shareprice_decimals = int(vaults.get(event.args.vault, {'decimals':'18'})['decimals'])
     shareprice = event.args.newSharePrice * ( 10 ** ( -1 * shareprice_decimals ) )
     shareprice_delta = (event.args.newSharePrice - event.args.oldSharePrice) / event.args.oldSharePrice
-    asset = vaults.get(event.args.vault, {'asset':'assets'})['asset']
+    asset = vaults.get(event.args.vault, {'asset':'a new vault'})['asset']
     strat_addr = event.args.strategy
     strat_name = strats.get(strat_addr, 'farming strategy')
     dt = datetime.datetime.utcfromtimestamp(event.args.timestamp).strftime('%Y-%m-%d %H:%M:%S')
