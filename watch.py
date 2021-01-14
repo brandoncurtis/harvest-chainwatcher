@@ -274,8 +274,9 @@ def handle_event(event):
 
   # UNISWAP TRADE, USDC
   elif event.address == UNIPOOL_FARM_USDC_ADDR:
-    if txhash in txids_seen:
-      return
+    # trades with yield aggregators may contain multiple uniswap event logs
+    #if txhash in txids_seen:
+    #  return
     print(f'event: FARM trade in the FARM:USDC Uniswap pool')
     farmsell, farmbuy = int(event.args.amount0In)*10**-18, int(event.args.amount0Out)*10**-18
     usdcsell, usdcbuy = int(event.args.amount1In)*10**-6, int(event.args.amount1Out)*10**-6
@@ -310,8 +311,9 @@ def handle_event(event):
 
   # UNISWAP TRADE, ETH
   elif event.address == UNIPOOL_FARM_ETH_ADDR:
-    if txhash in txids_seen:
-      return
+    # trades with yield aggregators may contain multiple uniswap event logs
+    #if txhash in txids_seen:
+    #  return
     print(f'event: FARM trade in the FARM:ETH Uniswap pool')
     farmsell, farmbuy = int(event.args.amount0In)*10**-18, int(event.args.amount0Out)*10**-18
     ethsell, ethbuy = int(event.args.amount1In)*10**-18, int(event.args.amount1Out)*10**-18
