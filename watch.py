@@ -287,7 +287,7 @@ def handle_event(event):
     # get price information
     print(f'fetching pool reserves...')
     poolvals = unipool_usdc_contract.functions['getReserves']().call(block_identifier=blocknum)
-    poolvals_eth = unipool_usdc_contract.functions['getReserves']().call(block_identifier=blocknum)
+    poolvals_eth = unipool_eth_contract.functions['getReserves']().call(block_identifier=blocknum)
     print(f'calculating price...')
     price = unirouter_contract.functions['quote'](ONE_18DEC, poolvals[0], poolvals[1]).call(block_identifier=blocknum)*10**-6
     print(f'price of FARM: ${price}')
