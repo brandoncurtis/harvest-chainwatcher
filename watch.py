@@ -131,6 +131,8 @@ strats = {
   '0xB075bA5DC253E39376AC044182BE13315e828AE2': 'BasisGoldStrategyMainnet_BAC',
   '0x3F37185399537e95686a66247514De55C8792eb3': 'BasisGold2FarmStrategyMainnet_DAI_BSGS',
   '0x8d640378C983C6aab076bdB5d86A58F9179055eD': 'BasisGold2FarmStrategyMainnet_DAI_BSG',
+  '0xc55f8Be3cc55cae1BfBE5558D9E5b44906Ed248A': 'CRVStrategyUSTMainnet',
+  '0x6d28d86ff925d2747D60a2b5C3E045F892f52285': 'CRVStrategyEURSMainnet',
 }
 
 vaults = {
@@ -139,6 +141,8 @@ vaults = {
   '0x371E78676cd8547ef969f89D2ee8fA689C50F86B': {'asset': 'fBAC', 'decimals': 18, 'type': 'timelock',},
   '0x633C4861A4E9522353EDa0bb652878B079fb75Fd': {'asset': 'fUNI-DAI:BSGS', 'decimals': 18, 'type': 'timelock',},
   '0x639d4f3F41daA5f4B94d63C2A5f3e18139ba9E54': {'asset': 'fUNI-DAI:BSG', 'decimals': 18, 'type': 'timelock',},
+  '0x84A1DfAdd698886A614fD70407936816183C0A02': {'asset': 'fCRV-UST', 'decimals': 18, 'type': 'timelock',},
+  '0x6eb941BD065b8a5bd699C5405A928c1f561e2e5a': {'asset': 'fCRV-EURS', 'decimals': 18, 'type': 'timelock',},
   '0x8e298734681adbfC41ee5d17FF8B0d6d803e7098': {'asset': 'fWETH-v0', 'decimals': 18,},
   '0xe85C8581e60D7Cd32Bbfd86303d2A4FA6a951Dac': {'asset': 'fDAI-v0', 'decimals': 18,},
   '0xc3F7ffb5d5869B3ade9448D094d81B0521e8326f': {'asset': 'fUSDC-v0', 'decimals': 6,},
