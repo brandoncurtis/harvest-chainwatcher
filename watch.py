@@ -133,9 +133,19 @@ strats = {
   '0x8d640378C983C6aab076bdB5d86A58F9179055eD': 'BasisGold2FarmStrategyMainnet_DAI_BSG',
   '0xc55f8Be3cc55cae1BfBE5558D9E5b44906Ed248A': 'CRVStrategyUSTMainnet',
   '0x6d28d86ff925d2747D60a2b5C3E045F892f52285': 'CRVStrategyEURSMainnet',
+  '0x52d8f04F071dD397C71514853A58664613B91192': 'CRVStrategySTETHMainnet',
+  '0xb5480a276C49B5e3a1bC13659030b4E94018a817': 'MirrorMainnet_mTSLA_UST',
+  '0x0a6ADe7348598E42Da381B03C1c40c9bA1c7747D': 'MirrorMainnet_mGOOG_UST',
+  '0x0c3d0B5910b0603d68be29a647c0F6187A8c3D36': 'MirrorMainnet_mAMZN_UST',
+  '0xA5a091fd156FF5e44f22Bef544923CDc850d9D46': 'MirrorMainnet_mAAPL_UST',
 }
 
 vaults = {
+  '0x11804D69AcaC6Ae9466798325fA7DE023f63Ab53': {'asset': 'fUNI-UST:mAAPL', 'decimals': 18, 'type': 'timelock',},
+  '0x8334A61012A779169725FcC43ADcff1F581350B7': {'asset': 'fUNI-mAMZN:UST', 'decimals': 18, 'type': 'timelock',},
+  '0x07DBe6aA35EF70DaD124f4e2b748fFA6C9E1963a': {'asset': 'fUNI-mGOOGL:UST', 'decimals': 18, 'type': 'timelock',},
+  '0xC800982d906671637E23E031e907d2e3487291Bc': {'asset': 'fUNI-mTSLA:UST', 'decimals': 18, 'type': 'timelock',},
+  '0xc27bfE32E0a934a12681C1b35acf0DBA0e7460Ba': {'asset': 'fCRV-stETH', 'decimals': 18, 'type': 'timelock',},
   '0x8Bf3c1c7B1961764Ecb19b4FC4491150ceB1ABB1': {'asset': 'fDSD', 'decimals': 18, 'type': 'timelock',},
   '0x45a9e027DdD8486faD6fca647Bb132AD03303EC2': {'asset': 'fESD', 'decimals': 18, 'type': 'timelock',},
   '0x371E78676cd8547ef969f89D2ee8fA689C50F86B': {'asset': 'fBAC', 'decimals': 18, 'type': 'timelock',},
