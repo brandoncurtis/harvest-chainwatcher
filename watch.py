@@ -138,9 +138,23 @@ strats = {
   '0x0a6ADe7348598E42Da381B03C1c40c9bA1c7747D': 'MirrorMainnet_mGOOG_UST',
   '0x0c3d0B5910b0603d68be29a647c0F6187A8c3D36': 'MirrorMainnet_mAMZN_UST',
   '0xA5a091fd156FF5e44f22Bef544923CDc850d9D46': 'MirrorMainnet_mAAPL_UST',
+  '0xA505917C1326670451EfF9ea75FE0d49a3853acF': 'CRVStrategyGUSDMainnet',
+  '0x636A37802dA562F7d562c1915cC2A948A1D3E5A0': 'MithCash2FarmStrategyMainnet_MIS_USDT',
+  '0xe12C4bB7b88b3CFe2d44a8e49037392B06bfaE72': 'MithCash2FarmStrategyMainnet_MIC_USDT',
+  '0x65fEFAB5ebeB38cBdE82C4C20E226834db15eD9F': 'Basis2FarmStrategyMainnet_BAC_DAI',
+  '0x61Ecfe8eB3522EC685C70f4732cf32c39CFd7d36': 'Basis2FarmStrategyMainnet_DAI_BAS',
+  '0x807a637A1C82ca37d4bac0aB2684b33600c4a60A': 'CRVStrategyEURSV2Mainnet',
+  '0xa5F125c0D571FD67D564C05a234E9a6f4E5d0624': 'IdleStrategyUSDCMainnet',
+  '0x5B96D6b56d4051Cb54269f3620C262dB22366194': 'IdleStrategyUSDTMainnet',
+  '0xb8E9Db02262d37233442932E1A6626D88c649c6e': 'IdleStrategyWBTCMainnet',
+  '0xC78589912C85B3c86055A244580629A8c6504695': 'IdleStrategyTUSDMainnet',
+  '0x67729651D5B265b0AD3e009437A71396Ae33eb83': 'OneInchStrategy_ETH_USDT',
+  '0x15aDA3630227a33751e986F3E77b0a073f77d17d': 'OneInchStrategy_ETH_WBTC',
+  '0x9a6dE10fc9B9D1CA9Df3caF306ED60Ef1C419774': 'IdleStrategyDAIMainnet',
 }
 
 vaults = {
+  '0xB8671E33fcFC7FEA2F7a3Ea4a117F065ec4b009E': {'asset': 'fGUSD3CRV', 'decimals': 18, 'type': 'timelock',},
   '0x11804D69AcaC6Ae9466798325fA7DE023f63Ab53': {'asset': 'fUNI-UST:mAAPL', 'decimals': 18, 'type': 'timelock',},
   '0x8334A61012A779169725FcC43ADcff1F581350B7': {'asset': 'fUNI-mAMZN:UST', 'decimals': 18, 'type': 'timelock',},
   '0x07DBe6aA35EF70DaD124f4e2b748fFA6C9E1963a': {'asset': 'fUNI-mGOOGL:UST', 'decimals': 18, 'type': 'timelock',},
@@ -377,6 +391,8 @@ def handle_event(event):
 
   # VAULT EVENT
   elif event.address in vaults.keys():
+    if txhash in txids_seen:
+      return
     print(f'event: vault strategy update')
     color = 16711680
     event_name = event.event
@@ -398,6 +414,8 @@ def handle_event(event):
 
   # HARVEST
   else:
+    if txhash in txids_seen:
+      return
     print(f'event: (probably) HARDWORK on a vault')
     color = 16776960
     shareprice_decimals = int(vaults.get(event.args.vault, {'decimals':'18'})['decimals'])
