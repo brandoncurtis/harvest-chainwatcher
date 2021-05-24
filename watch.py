@@ -30,7 +30,7 @@ NODE_URL_MATIC = os.getenv("NODE_URL_MATIC")
 NODE_URL_BSC = os.getenv("NODE_URL_BSC")
 # BOT BEHAVIOR
 POST_TO_DISCORD = os.getenv("POST_TO_DISCORD")
-START_BLOCK = int(os.getenv("START_BLOCK"))
+START_BLOCK_ETH = int(os.getenv("START_BLOCK_ETH"))
 START_BLOCK_MATIC = int(os.getenv("START_BLOCK_MATIC"))
 START_BLOCK_BSC = int(os.getenv("START_BLOCK_BSC"))
 LOOKBACK = os.getenv("LOOKBACK")
@@ -60,9 +60,41 @@ ZERO_ADDR = "0x0000000000000000000000000000000000000000"
 PRICEDELTA_PERCENT_THRESHOLD = 2.0
 PRICEDELTA_PERCENT_THRESHOLD_MATIC = 0.1
 
-w3 = Web3(Web3.HTTPProvider(NODE_URL, request_kwargs={'timeout': 120}))
-m3 = Web3(Web3.HTTPProvider(NODE_URL_MATIC, request_kwargs={'timeout': 120}))
-b3 = Web3(Web3.HTTPProvider(NODE_URL_BSC, request_kwargs={'timeout': 120}))
+# Activate networks
+w3 = False
+m3 = False
+b3 = False
+activenet = {
+        'eth': False,
+        'matic': False,
+        'bsc': False,
+        }
+try: 
+  provider = Web3(Web3.HTTPProvider(NODE_URL, request_kwargs={'timeout': 120}))
+  print(f'ETH -- blockheight: {provider.eth.blockNumber}')
+  w3 = provider
+  activenet['eth'] = True
+except Exception as e:
+  print(f'ETH -- problem with node! support disabled')
+  print(f'ETH -- {e}')
+
+try: 
+  provider = Web3(Web3.HTTPProvider(NODE_URL_MATIC, request_kwargs={'timeout': 120}))
+  print(f'MATIC -- blockheight: {provider.eth.blockNumber}')
+  m3 = provider
+  activenet['matic'] = True
+except Exception as e:
+  print(f'MAT -- problem with node! support disabled')
+  print(f'MAT -- {e}')
+
+try: 
+  provider = Web3(Web3.HTTPProvider(NODE_URL_BSC, request_kwargs={'timeout': 120}))
+  print(f'BSC -- blockheight: {provider.eth.blockNumber}')
+  b3 = provider
+  activenet['bsc'] = True
+except Exception as e:
+  print(f'BSC -- problem with node! support disabled')
+  print(f'BSC -- {e}')
 
 CONTROLLER_ADDR = '0x222412af183BCeAdEFd72e4Cb1b71f1889953b1C'
 UNIPOOL_FARM_USDC_ADDR = '0x514906FC121c7878424a5C928cad1852CC545892'
@@ -87,6 +119,16 @@ BSC_UNIPOOL_FARM_BUSD_ADDR = '0x8e1E53d73Be3A72d8c6108F8758069A54B4B564E'
 LOOKBACK_BSC_TRADES = os.getenv("LOOKBACK_BSC_TRADES")
 
 strats = {
+  '0x7724844189CD0Bb08cAAD3d2F47d826EcB33aFe5': 'fUNI-COMFI:ETH StrategyProxy',
+  '0x99F3157A9b96245a3c5a57A762C58474A06c3F7C': 'fUNI-MUSE:ETH StrategyProxy',
+  '0x40D94AEFEC6ac00Fa80689A38135D83EeAa58999': 'StrategyProxy',
+  '0xbdc7D6284BAD0D7243Bf3ca4DCeaE2A86DeEe37d': 'StrategyProxy',
+  '0x7E33Ef42d0B7f2b25E27b49004cE79E1b11f2649': 'StrategyProxy',
+  '0x991c40f931446321e3219a867a36B505b76E9522': 'IndexStrategyMainnet_MVI_ETH',
+  '0xa03833A5Eef48fAd3295C11e6c1E5701C2817e16': 'Klondike2FarmStrategyMainnet_KXUSD_DAI',
+  '0x170f77e70E488FB7d486aB916E305CA85D45364f': 'Klondike2FarmStrategyMainnet_WBTC_KLONX',
+  '0x45D17d7C638A0ab6ec4eb736F87313d91EFFbBd5': 'OneInchStrategy_ETH_ONEINCH',
+  '0x8d7dA935C449bE284B27D96B6F215d6Dba95d8d1': 'OneInchStrategy_1INCH_USDC',
   '0xb3fFE89b4f9e0b76980Ee06301409521CF6825Cc': 'OneInchStrategy_1INCH_WBTC',
   '0x405FE1198edABAE6a85C494dCF09f7be6a957b1D': 'StrategyProxy',
   '0x6Cb5e2fC7c258A1ec07f6a251f8E67A4e485812F': 'Klondike2FarmStrategyMainnet_WBTC_KBTCV2',
@@ -218,7 +260,15 @@ strats = {
 }
 
 vaults = {
+  '0x5EA74C6AbF0e523fdecFE218CCb3d2fDe2339613': {'asset': 'fUNI-MVI:ETH', 'decimals': 18, 'type': 'timelock',},
+  '0xB89777534acCcc9aE7cbA0e72163f9F214189263': {'asset': 'fUNI-COMFI:ETH', 'decimals': 18, 'type': 'timelock',},
+  '0xe6e0B4294eF6a518bB702402e9842Df2a2Abf1B1': {'asset': 'fUNI-ETH:GPUNKS', 'decimals': 18, 'type': 'timelock',},
+  '0xd3093e3EfBE00f010E8F5Efe3f1cb5d9b7Fe0eb1': {'asset': 'f-ETHx5-1Jun21', 'decimals': 18, 'type': 'timelock',},
   #'': {'asset': '', 'decimals': 18, 'type': 'timelock',},
+  '0x227A46266329767cEa8883BFC81d21f1Ea0EdbB3': {'asset': 'fUNI-MEME20:ETH', 'decimals': 18, 'type': 'timelock',},
+  '0xBb1565072FB4f3244eBcE5Bc8Dfeda6baEb78Ad3': {'asset': 'fUNI-GPUNKS20:ETH', 'decimals': 18, 'type': 'timelock',},
+  '0x4d3C5dB2C68f6859e0Cd05D080979f597DD64bff': {'asset': 'fUNI-MVI:ETH', 'decimals': 18, 'type': 'timelock',},
+  '0x672C973155c46Fc264c077a41218Ddc397bB7532': {'asset': 'fUNI-KXUSD:DAI', 'decimals': 18, 'type': 'timelock',},
   # Harvest internal vaults
   '0x1571eD0bed4D987fe2b498DdBaE7DFA19519F651': {'asset': 'iFARM', 'decimals': 18, 'type': 'timelock',},
   # Sushiswap liquidity incentives + do not sell SUSHI
@@ -270,13 +320,15 @@ vaults = {
   '0x307E2752e8b8a9C29005001Be66B1c012CA9CDB7': {'asset': 'fUNI-ETH-DAI', 'decimals': 18, 'type': 'timelock',},
   '0x2a32dcBB121D48C106F6d94cf2B4714c0b4Dfe48': {'asset': 'fUNI-ETH-DPI', 'decimals': 18, 'type': 'timelock',},
   # 1INCH liquidity incentives
-  '0xDdB4669f39c03A6edA92ffB5B78A9C1a74615F1b': {'asset': 'f1INCH-1INCH:WBTC', 'deicmals': 18, 'type': 'timelock',},
+  '0xDdB4669f39c03A6edA92ffB5B78A9C1a74615F1b': {'asset': 'f1INCH-1INCH:WBTC', 'decimals': 18, 'type': 'timelock',},
+  '0xF174DDDD9DBFfeaeA5D908a77d695a77e53025b3': {'asset': 'f1INCH-1INCH:USDC', 'decimals': 18, 'type': 'timelock',},
+  '0xFCA949E34ecd9dE519542CF02054DE707Cf361cE': {'asset': 'f1INCH-ETH:1INCH', 'decimals': 18, 'type': 'timelock',},
   '0x8e53031462E930827a8d482e7d80603B1f86e32d': {'asset': 'f1INCH-ETH:DAI', 'decimals': 18, 'type': 'timelock',},
   '0x859222DD0B249D0ea960F5102DaB79B294d6874a': {'asset': 'f1INCH-ETH:WBTC', 'decimals': 18, 'type': 'timelock',},
   '0x4bf633A09bd593f6fb047Db3B4C25ef5B9C5b99e': {'asset': 'f1INCH-ETH:USDT', 'decimals': 18, 'type': 'timelock',},
   '0xD162395C21357b126C5aFED6921BC8b13e48D690': {'asset': 'f1INCH-ETH:USDC', 'decimals': 18, 'type': 'timelock',},
-  '0xFCA949E34ecd9dE519542CF02054DE707Cf361cE': {'asset': 'f1INCH-ETH:1INCH', 'decimals': 18, 'type': 'timelock',},
   # Curve liquidity incentives
+  '0x7Eb40E450b9655f4B3cC4259BCC731c63ff55ae6': {'asset': 'fCRV-USDP', 'decimals': 18, 'type': 'timelock',},
   '0x24C562E24A4B5D905f16F2391E07213efCFd216E': {'asset': 'fCRV-LINK', 'decimals': 18, 'type': 'timelock',},
   '0x9aA8F427A17d6B0d91B6262989EdC7D45d6aEdf8': {'asset': 'fCRV-RENWBTC', 'decimals': 18, 'type': 'timelock',},
   '0x640704D106E79e105FDA424f05467F005418F1B5': {'asset': 'fCRV-TBTC', 'decimals': 18, 'type': 'timelock',},
@@ -390,12 +442,14 @@ minter_contract = w3.eth.contract(address=MINTER_ADDR, abi=MINTER_ABI)
 # Smart Contracts - MATIC
 matic_root_contract = w3.eth.contract(address=MATIC_ROOT_ADDR, abi=MATIC_ROOT_ABI)
 matic_erc20_contract = w3.eth.contract(address=MATIC_ERC20_ADDR, abi=MATIC_ERC20_ABI)
-matic_unirouter_contract = m3.eth.contract(address=MATIC_UNIROUTER_ADDR, abi=UNIROUTER_ABI)
-matic_unipool_ifarm_matic_contract = m3.eth.contract(address=MATIC_UNIPOOL_IFARM_MATIC_ADDR, abi=UNIPOOL_ABI)
-matic_unipool_ifarm_quick_contract = m3.eth.contract(address=MATIC_UNIPOOL_IFARM_QUICK_ADDR, abi=UNIPOOL_ABI)
+if activenet['matic']:
+  matic_unirouter_contract = m3.eth.contract(address=MATIC_UNIROUTER_ADDR, abi=UNIROUTER_ABI)
+  matic_unipool_ifarm_matic_contract = m3.eth.contract(address=MATIC_UNIPOOL_IFARM_MATIC_ADDR, abi=UNIPOOL_ABI)
+  matic_unipool_ifarm_quick_contract = m3.eth.contract(address=MATIC_UNIPOOL_IFARM_QUICK_ADDR, abi=UNIPOOL_ABI)
 # Smart Contracts - BSC
-bsc_unirouter_contract = b3.eth.contract(address=BSC_UNIROUTER_ADDR, abi=UNIROUTER_ABI)
-bsc_unipool_farm_busd_contract = b3.eth.contract(address=BSC_UNIPOOL_FARM_BUSD_ADDR, abi=UNIPOOL_ABI)
+if activenet['bsc']:
+  bsc_unirouter_contract = b3.eth.contract(address=BSC_UNIROUTER_ADDR, abi=UNIROUTER_ABI)
+  bsc_unipool_farm_busd_contract = b3.eth.contract(address=BSC_UNIPOOL_FARM_BUSD_ADDR, abi=UNIPOOL_ABI)
 
 txids_seen = []
 
@@ -675,6 +729,7 @@ def handle_event(event):
       return
   send_msg(msg, tweet, net, color)
   txids_seen.append(txhash)
+  cache_blockheight(net, blocknum)
 
 def send_msg(msg, tweet, net='ETH', color=None):
   data = {}
@@ -712,7 +767,7 @@ def get_burn_stats(blocknum):
   return remaining_supply, total_supply
 
 def log_lookback(event_filters):
-  print(f'Starting log lookback at {START_BLOCK}...')
+  print(f'Starting log lookback at {START_BLOCK_ETH}...')
   for n, event_filter in enumerate(event_filters, 1):
     print(f'Starting log lookback on contract {n}...')
     for event in event_filter.get_all_entries():
@@ -727,34 +782,43 @@ async def log_loop(event_filters, poll_interval):
         handle_event(event)
     await asyncio.sleep(poll_interval)
 
+def cache_blockheight(net, blocknum):
+  with open(f'blockcache_{net}', 'w') as f:
+    f.write(str(blocknum))
+    print(f'{net.upper()} -- cache blockheight {blocknum}')
+
 def main():
   if LOOKBACK == 'True':
     # set up lookback
     lookback_filters = []
-    if LOOKBACK_MATIC == 'True':
-      lookback_filters.append(matic_root_contract.events.NewHeaderBlock.createFilter(fromBlock=START_BLOCK))
-    if LOOKBACK_MATIC_BRIDGE == 'True':
-      lookback_filters.append(matic_erc20_contract.events.LockedERC20.createFilter(fromBlock=START_BLOCK, argument_filters={"rootToken":IFARM_ADDR}))
-    if LOOKBACK_MATIC_TRADES == 'True':
-      lookback_filters.append(matic_unipool_ifarm_matic_contract.events.Swap.createFilter(fromBlock=START_BLOCK_MATIC))
-      lookback_filters.append(matic_unipool_ifarm_quick_contract.events.Swap.createFilter(fromBlock=START_BLOCK_MATIC))
-    if LOOKBACK_BSC_TRADES == 'True':
-      lookback_filters.append(bsc_unipool_farm_busd_contract.events.Swap.createFilter(fromBlock=START_BLOCK_BSC))
     if LOOKBACK_MINTER == 'True':
-      lookback_filters.append(minter_contract.events.MintingAnnounced.createFilter(fromBlock=START_BLOCK))
+      lookback_filters.append(minter_contract.events.MintingAnnounced.createFilter(fromBlock=START_BLOCK_ETH))
     if LOOKBACK_HARVESTS == 'True':
-      lookback_filters.append(controller_contract.events.SharePriceChangeLog.createFilter(fromBlock=START_BLOCK))
+      lookback_filters.append(controller_contract.events.SharePriceChangeLog.createFilter(fromBlock=START_BLOCK_ETH))
     if LOOKBACK_TRADES == 'True':
-      lookback_filters.append(unipool_usdc_contract.events.Swap.createFilter(fromBlock=START_BLOCK))
-      lookback_filters.append(unipool_eth_contract.events.Swap.createFilter(fromBlock=START_BLOCK))
+      lookback_filters.append(unipool_usdc_contract.events.Swap.createFilter(fromBlock=START_BLOCK_ETH))
+      lookback_filters.append(unipool_eth_contract.events.Swap.createFilter(fromBlock=START_BLOCK_ETH))
     if LOOKBACK_BURNS == 'True':
-      lookback_filters.append(grain_contract.events.Transfer.createFilter(fromBlock=START_BLOCK, argument_filters={"to":ZERO_ADDR}))
+      lookback_filters.append(grain_contract.events.Transfer.createFilter(fromBlock=START_BLOCK_ETH, argument_filters={"to":ZERO_ADDR}))
     if LOOKBACK_STRATEGIES == 'True':
       for vault in vaults:
         if vaults.get(vault).get('type', '') == 'timelock':
           vault_contract = w3.eth.contract(address=vault, abi=VAULT_TIMELOCK_ABI)
-          lookback_filters.append(vault_contract.events.StrategyAnnounced.createFilter(fromBlock=START_BLOCK))
-          lookback_filters.append(vault_contract.events.StrategyChanged.createFilter(fromBlock=START_BLOCK))
+          lookback_filters.append(vault_contract.events.StrategyAnnounced.createFilter(fromBlock=START_BLOCK_ETH))
+          lookback_filters.append(vault_contract.events.StrategyChanged.createFilter(fromBlock=START_BLOCK_ETH))
+    # MATIC lookback
+    if LOOKBACK_MATIC_BRIDGE == 'True':
+      lookback_filters.append(matic_erc20_contract.events.LockedERC20.createFilter(fromBlock=START_BLOCK_ETH, argument_filters={"rootToken":IFARM_ADDR}))
+    if LOOKBACK_MATIC == 'True':
+      lookback_filters.append(matic_root_contract.events.NewHeaderBlock.createFilter(fromBlock=START_BLOCK_ETH))
+    if activenet['matic']:
+      if LOOKBACK_MATIC_TRADES == 'True':
+        lookback_filters.append(matic_unipool_ifarm_matic_contract.events.Swap.createFilter(fromBlock=START_BLOCK_MATIC))
+        lookback_filters.append(matic_unipool_ifarm_quick_contract.events.Swap.createFilter(fromBlock=START_BLOCK_MATIC))
+    # BSC lookback
+    if activenet['bsc']:
+      if LOOKBACK_BSC_TRADES == 'True':
+        lookback_filters.append(bsc_unipool_farm_busd_contract.events.Swap.createFilter(fromBlock=START_BLOCK_BSC))
     # run lookback
     log_lookback(lookback_filters)
   # set up the loop
@@ -766,13 +830,15 @@ def main():
     event_filters.append(unipool_usdc_contract.events.Swap.createFilter(fromBlock='latest'))
     event_filters.append(unipool_eth_contract.events.Swap.createFilter(fromBlock='latest'))
     event_filters.append(grain_contract.events.Transfer.createFilter(fromBlock='latest', argument_filters={"to":ZERO_ADDR}))
-    event_filters.append(matic_root_contract.events.NewHeaderBlock.createFilter(fromBlock='latest'))
     event_filters.append(minter_contract.events.MintingAnnounced.createFilter(fromBlock='latest'))
+    # MATIC events
+    event_filters.append(matic_root_contract.events.NewHeaderBlock.createFilter(fromBlock='latest'))
     event_filters.append(matic_erc20_contract.events.LockedERC20.createFilter(fromBlock='latest', argument_filters={"rootToken":IFARM_ADDR}))
-    event_filters.append(matic_unipool_ifarm_matic_contract.events.Swap.createFilter(fromBlock='latest'))
-    # TODO create handler for ifarm:quick swaps
-    #event_filters.append(matic_unipool_ifarm_quick_contract.events.Swap.createFilter(fromBlock='latest'))
-    #event_filters.append(bsc_unipool_farm_busd_contract.events.Swap.createFilter(fromBlock='latest'))
+    if activenet['matic']:
+      event_filters.append(matic_unipool_ifarm_matic_contract.events.Swap.createFilter(fromBlock='latest'))
+      # TODO create handler for ifarm:quick swaps
+      #event_filters.append(matic_unipool_ifarm_quick_contract.events.Swap.createFilter(fromBlock='latest'))
+      #event_filters.append(bsc_unipool_farm_busd_contract.events.Swap.createFilter(fromBlock='latest'))
     for vault in vaults:
       if vaults.get(vault).get('type', '') == 'timelock':
         vault_contract = w3.eth.contract(address=vault, abi=VAULT_TIMELOCK_ABI)
