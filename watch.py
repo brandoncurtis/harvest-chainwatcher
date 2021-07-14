@@ -71,8 +71,10 @@ activenet = {
         }
 try: 
   provider = Web3(Web3.HTTPProvider(NODE_URL, request_kwargs={'timeout': 120}))
-  print(f'ETH -- blockheight: {provider.eth.blockNumber}')
+  #provider = Web3(Web3.WebsocketProvider('ws://ethereum.nodes.radar.dev/mainnet/archive/ws'))
   w3 = provider
+  print(f'ETH -- blockheight: {provider.eth.blockNumber}')
+  #w3 = provider
   activenet['eth'] = True
 except Exception as e:
   print(f'ETH -- problem with node! support disabled')
@@ -96,7 +98,13 @@ except Exception as e:
   print(f'BSC -- problem with node! support disabled')
   print(f'BSC -- {e}')
 
+FCASH_MINT_THRESHOLD = 10000000000000000000000
+FCASH_ADDR = '0x5917C41a355D16D3950FE12299Ce6DFc1b54cD54'
+FCASH_ABI = os.getenv('FCASH_ABI')
+OFFSET_ADDR = '0xdcf28c0E90E375098E9eDEC758078c4586421DAf'
+OFFSET_ABI = os.getenv('OFFSET_ABI')
 CONTROLLER_ADDR = '0x222412af183BCeAdEFd72e4Cb1b71f1889953b1C'
+CONTROLLER2_ADDR = '0x3cC47874dC50D98425ec79e647d83495637C55e3'
 UNIPOOL_FARM_USDC_ADDR = '0x514906FC121c7878424a5C928cad1852CC545892'
 UNIPOOL_FARM_ETH_ADDR = '0x56feAccb7f750B997B36A68625C7C596F0B41A58'
 UNIPOOL_USDC_ETH_ADDR = '0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc'
@@ -119,6 +127,45 @@ BSC_UNIPOOL_FARM_BUSD_ADDR = '0x8e1E53d73Be3A72d8c6108F8758069A54B4B564E'
 LOOKBACK_BSC_TRADES = os.getenv("LOOKBACK_BSC_TRADES")
 
 strats = {
+  '0x1851A8fA2ca4d8Fb8B5c56EAC1813Fd890998EFc': 'fUNIv3-UST:USDT UniVaultProxy',
+  '0xFb387177fF9Db15294F7Aebb1ea1e941f55695bc': 'fUNIv3-DAI:USDC UniVaultProxy',
+  '0x610A02867877cf9438438D85A33230c4366e1354': 'fUNI-ETH:GPUNKS StrategyProxy',
+  '0x000D02BB5e9FF7BD7Aec0c37999B4d1031857704': 'fCRV-HUSD StrategyProxy',
+  '0x59b5562455B6dB440265e0Ae63DAB8D59FE4c16B': 'fCRV-EURS StrategyProxy',
+  '0x51eBE128f197BBF087Ce79Db51960eB6e86bbF0f': 'Basis2FarmStrategyMainnet_BAC_DAIV4',
+  '0x7497Fd6faD202D2236775b8519827aAAe7235262': 'fUNI-ETH:MASK20',
+  '0x0d3921EE9B5E39BCcAf6E792512f12BC755c6c0e': 'fCRV-COMP StrategyProxy',
+  '0xC905ccc1a1EC21C8bbE0c0b53d3D048D9055D4bB': 'fUNIv3-DAI:ETH UniProxyVault',
+  '0x78eB4e2B2df8A02C0f4A1a1176Abfe19ac42c0Cc': 'fUNI-DUDES20:ETH',
+  '0x6c0bc8A9DF387c499a7e22201C4A6589b6007E46': 'fUNI-MCAT20:ETH StrategyProxy',
+  '0x610A02867877cf9438438D85A33230c4366e1354': 'fUNI-ETH:GPUNKS StrategyProxy',
+  '0xFD4e29e4869112abbec6846151F6D47FD25d5FF8': 'Basis2FarmStrategyMainnet_DAI_BASV4',
+  '0x9044D3a001Ec3557D0Ca55Eb789db3a93532c23A': 'fUNI-ROPE20:ETH StrategyProxy',
+  '0x77FCB2C2c7EA27F97a47bD9641677D297382a8A9': 'fCRV-EURS StrategyProxy',
+  '0xfDB0cdB78C5a7f2fA3ff9f7a505DCfE20a62747F': 'fCRV-TRICRYPTO StrategyProxy',
+  '0x80A66Dd69eD1B7DDf6aE622Aa942C8187dfc0B75': 'fCRV-LINK StrategyProxy',
+  '0x45A78dEbfb4d9E94836dC1680d7FAf32b3994a83': 'fUNIv3-USDC:WETH UniProxyVault',
+  '0x0a1AB972612489a1a362f42559bcd281FBEc0786': 'fUNIv3-WETH:USDT UniProxyVault',
+  '0xe29385F6B90F25082972B75ccBC69900cE8A176A': 'fUNIv3-USDC:USDT UniProxyVault',
+  '0x3F16b084Ff94c8a3f5A1b60834046f1febD15595': 'fUNIv3-UNI:WETH UniProxyVault',
+  '0x2357685B07469eE80A389819C7A41edCD70cd88C': 'fUNIv3-WBTC:WETH UniProxyVault',
+  '0x0b4C4EA418Cd596B1204C0dd07E419707149C7C6': 'fUNIv3-USDC:WETH UniVaultProxy',
+  '0x5c49E0386215077d1A3eCc425CC30ce34Ec08B60': 'fUNIv3-ETH:USDT UniVaultProxy',
+  '0x970CC1E0Bdb3B29a6A12BDE1954A8509acbC9158': 'fUNIv3-DAI:ETH UniVaultProxy',
+  '0x630D435934e07151DB105D2D43BF5a3d3705e781': 'fSUSHI-PERP:ETH StrategyProxy', 
+  '0xa788fE8aae24220E277D43b70426d384E2288e1A': 'fCRV-USDP StrategyProxy',
+  '0xCe9Bc5157F2d28d64749e27ddFa18159C795e5AA': 'fCRV-HBTC StrategyProxy',
+  '0xFAB83A20d8Acd21A6581370Ac38A16844cA0c008': 'IdleStrategyDAIMainnet',
+  '0x6A19AEa134Cc3C6069B2d89B5A1042cabC683cDE': 'fCRV-BUSD StrategyProxy',
+  '0x6091bbF60CA294f223b03b7C05f98cAe1226363F': 'LiftStrategyMainnet_lfBTC_LIFT',
+  '0xe085C4Cbd7B8C79e302DEd58B954AE6E26997918': 'fUNI-MEME20:ETH StrategyProxy',
+  '0x90E938C50f56Aee8ed12D72b3b178bF5C395bDC5': 'fCRV-RENWBTC StrategyProxy',
+  '0x0250038B2444665f2f146E6Ed5CD881eb5756029': 'fCRV-3POOL StrategyProxy',
+  '0xff2adcF9e251b656f0C22Bf6B153DB4c851E4A6C': 'fCRV-USDN StrategyProxy',
+  '0x1703fea13672DFE8899E44c21F7e0b626550d08D': 'fCRV-OBTC StrategyProxy',
+  '0x4503af30fe799c4677cf5814eC8160Efc98af72E': 'fCRV-stETH StrategyProxy',
+  '0x4157beBDeBb508A62874c841b07Ae4013dB8B274': 'LiftStrategyMainnet_wBTC_lfBTC',
+  '0xA1DdB9C23e678B55fde108C41741f6c85EDF1972': 'LiftStrategyMainnet_lfBTC_LIFT',
   '0x7724844189CD0Bb08cAAD3d2F47d826EcB33aFe5': 'fUNI-COMFI:ETH StrategyProxy',
   '0x99F3157A9b96245a3c5a57A762C58474A06c3F7C': 'fUNI-MUSE:ETH StrategyProxy',
   '0x40D94AEFEC6ac00Fa80689A38135D83EeAa58999': 'StrategyProxy',
@@ -138,10 +185,10 @@ strats = {
   '0x32448D412e1821E5FB598291dC2de2aD91A78658': 'StrategyProxy',
   '0x7ce0c1E2985677743A789dC4B64E9230f8862395': 'StrategyProxy',
   '0x04b50373d4E190D4921bAbB9e874bB94E37EA045': 'XSushiStrategyMainnet',
-  '0x4Cad48Bf9a362d3576d2aaCD5fD0DbD4F9e9FAB8': 'StrategyProxy',
-  '0x33Fed4ccB4175484a692c83942D4374FcD1a3CD4': 'StrategyProxy',
-  '0x8e8C911D46baDc3e69d781744d57884eEF6b4c43': 'StrategyProxy',
-  '0x923ca6DCEF62030Bed25aA3EF854F39dc45DDa65': 'StrategyProxy',
+  '0x4Cad48Bf9a362d3576d2aaCD5fD0DbD4F9e9FAB8': 'fSUSHI-WBTC:ETH HODL StrategyProxy',
+  '0x33Fed4ccB4175484a692c83942D4374FcD1a3CD4': 'fSUSHI-ETH:USDT HODL StrategyProxy',
+  '0x8e8C911D46baDc3e69d781744d57884eEF6b4c43': 'fSUSHI-USDC:ETH HODL StrategyProxy',
+  '0x923ca6DCEF62030Bed25aA3EF854F39dc45DDa65': 'fSUSHI-DAI:ETH HODL StrategyProxy',
   '0x18fe4B095dc23411857e174D8C561C860c6C7CD5': 'StrategyProxy',
   '0x97487C1F352a8076A738fbDcd316A10F01046567': 'MirrorMainnet_mNFLX_UST',
   '0x18fbE81e56133118669660A46d050546045aB9B3': 'MirrorMainnet_mTWTR_UST',
@@ -211,11 +258,11 @@ strats = {
   '0xb8E9Db02262d37233442932E1A6626D88c649c6e': 'IdleStrategyWBTCMainnet',
   '0xC78589912C85B3c86055A244580629A8c6504695': 'IdleStrategyTUSDMainnet',
   '0x9a6dE10fc9B9D1CA9Df3caF306ED60Ef1C419774': 'IdleStrategyDAIMainnet',
-  '0x180A71C5688AC7e2368890ef77B0036Af8e261b6': 'StrategyProxy',
-  '0x895CC1b32Aa6f5FEdf0E113eAC556309Ad225322': 'StrategyProxy',
-  '0xd5d2ADcb5e6ad20425B0650E4050c0eA9ec3cEC0': 'StrategyProxy',
-  '0xdD1dFbB5A580e96C2723cCAF687227900F97F053': 'StrategyProxy',
-  '0xA44ffa733f1d500Fd10C613Cf66C87320d87ebee': 'StrategyProxy',
+  '0x180A71C5688AC7e2368890ef77B0036Af8e261b6': 'fSUSHI-WETH:USDT StrategyProxy',
+  '0x895CC1b32Aa6f5FEdf0E113eAC556309Ad225322': 'fSUSHI-WETH:DAI StrategyProxy',
+  '0xd5d2ADcb5e6ad20425B0650E4050c0eA9ec3cEC0': 'fSUSHI-WETH:USDC StrategyProxy',
+  '0xdD1dFbB5A580e96C2723cCAF687227900F97F053': 'fSUSHI-WETH:WBTC StrategyProxy',
+  '0xA44ffa733f1d500Fd10C613Cf66C87320d87ebee': 'fSUSHI-SUSHI:ETH StrategyProxy',
   '0x1Dcaf36c8c4222139899690945f4382f298f8735': 'CompoundWETHFoldStrategyMainnet',
   '0x5DB1B2128bCCC5B49f9cA7E3086b14fd4cf2ef64': 'CompoundNoFoldStrategyUSDCMainnet',
   '0xDA9A3F634eDE5DE46ea3B7BBFc6a811C4AeBe737': 'CompoundNoFoldStrategyUSDTMainnet',
@@ -260,11 +307,18 @@ strats = {
 }
 
 vaults = {
+  '0x230D3E848d04516826067aCb08Fa6c5A552D3E62': {'asset': 'fSUSHI-PERP:ETH', 'decimals': 18, 'type': 'timelock',},
+  '0x33ED34dD7C40EF807356316B484d595dDDA832ab': {'asset': 'fCRV-TRICRYPTO', 'decimals': 18, 'type': 'timelock',},
+  #'': {'asset': 'fUNIv3-DAI:ETH', 'decimals': 18, 'type': 'timelock',},
+  #'0x970CC1E0Bdb3B29a6A12BDE1954A8509acbC9158': {'asset': 'fUNIv3-DAI:ETH', 'decimals': 18, 'type': 'timelock',},
+  '0xc8404f55015FC76eA36Ca11dc8628dD38F1d6Ed2': {'asset': 'fSLP-wBTC:lfBTC', 'decimals': 18, 'type': 'timelock',},
+  '0x8d2450C6e35c765fA4D43FC9EEA87bE269E1Ab5b': {'asset': 'fSLP-lfBTC:LIFT', 'decimals': 18, 'type': 'timelock',},
   '0x5EA74C6AbF0e523fdecFE218CCb3d2fDe2339613': {'asset': 'fUNI-MVI:ETH', 'decimals': 18, 'type': 'timelock',},
   '0xB89777534acCcc9aE7cbA0e72163f9F214189263': {'asset': 'fUNI-COMFI:ETH', 'decimals': 18, 'type': 'timelock',},
   '0xe6e0B4294eF6a518bB702402e9842Df2a2Abf1B1': {'asset': 'fUNI-ETH:GPUNKS', 'decimals': 18, 'type': 'timelock',},
   '0xd3093e3EfBE00f010E8F5Efe3f1cb5d9b7Fe0eb1': {'asset': 'f-ETHx5-1Jun21', 'decimals': 18, 'type': 'timelock',},
   #'': {'asset': '', 'decimals': 18, 'type': 'timelock',},
+  '0x8486c538DcBD6A707c5b3f730B6413286FE8c854': {'asset': 'fSUSHI-PERP:ETH', 'decimals': 18, 'type': 'timelock',},
   '0x227A46266329767cEa8883BFC81d21f1Ea0EdbB3': {'asset': 'fUNI-MEME20:ETH', 'decimals': 18, 'type': 'timelock',},
   '0xBb1565072FB4f3244eBcE5Bc8Dfeda6baEb78Ad3': {'asset': 'fUNI-GPUNKS20:ETH', 'decimals': 18, 'type': 'timelock',},
   '0x4d3C5dB2C68f6859e0Cd05D080979f597DD64bff': {'asset': 'fUNI-MVI:ETH', 'decimals': 18, 'type': 'timelock',},
@@ -431,8 +485,11 @@ api = twitter.Api(consumer_key=consumer_key, consumer_secret=consumer_secret,
                   input_encoding="utf-8")
 
 # Smart Contracts
+fcash_contract = w3.eth.contract(address=FCASH_ADDR, abi=FCASH_ABI)
+offset_contract = w3.eth.contract(address=OFFSET_ADDR, abi=OFFSET_ABI)
 token_farm_contract = w3.eth.contract(address=TOKEN_FARM_ADDR, abi=TOKEN_FARM_ABI)
 controller_contract = w3.eth.contract(address=CONTROLLER_ADDR, abi=CONTROLLER_ABI)
+controller2_contract = w3.eth.contract(address=CONTROLLER2_ADDR, abi=CONTROLLER_ABI)
 unipool_eth_contract = w3.eth.contract(address=UNIPOOL_FARM_ETH_ADDR, abi=UNIPOOL_ABI)
 unipool_usdc_contract = w3.eth.contract(address=UNIPOOL_FARM_USDC_ADDR, abi=UNIPOOL_ABI)
 unipool_usdceth_contract = w3.eth.contract(address=UNIPOOL_USDC_ETH_ADDR, abi=UNIPOOL_ABI)
@@ -463,8 +520,35 @@ def handle_event(event):
   color = None
   net = 'ETH'
 
+  # MCO2 BURN
+  if event.address == OFFSET_ADDR:
+    if txhash in txids_seen:
+      return
+    print(f'event: MCO2 burn')
+    color = 32768
+    msg = (f':fire: At block `{blocknum}`, '
+           f'`{int(event.args.amount)*10**-18:,.3f}` :four_leaf_clover: MCO2 was [burned](<https://etherscan.io/tx/{txhash}>)\n'
+           f'<:chadright:758033272101011622> by [{event.args.to}](<https://etherscan.io/address/{event.args.to}>)!\n'
+           f'Each MCO2 offsets 1 ton of CO2 via [rainforest preservation](<https://moss.earth>) :palm_tree::palm_tree::palm_tree:'
+           )
+
+  # FCASH MINT
+  elif event.address == FCASH_ADDR:
+    if txhash in txids_seen:
+      return
+    print(f'event: fCASH mint')
+    if int(event.args.tokenAmount) < FCASH_MINT_THRESHOLD:
+      return
+    #color = 32768
+    msg = (f':dollar: At block `{blocknum}`, '
+           f'`{int(event.args.tokenAmount)*10**-18:,.0f}` fCASH was [minted](<https://etherscan.io/tx/{txhash}>) with `{int(event.args.collateralAmount)*10**-18:,.1f}` iFARM\n'
+           f'<:chadright:758033272101011622> by [{event.args.sponsor}](<https://etherscan.io/address/{event.args.sponsor}>)!\n'
+           f':bank: [mint fCASH with iFARM](http://fcash.farmdashboard.xyz/) and '
+           f'[trade it on Matcha](<https://matcha.xyz/markets/1/0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48/0x531261a091f31bfd93dd393a6ca447ed6fb2043c>)'
+           )
+
   # GRAIN BURN
-  if event.address == GRAIN_ADDR:
+  elif event.address == GRAIN_ADDR:
     if txhash in txids_seen:
       return
     print(f'event: GRAIN burn')
@@ -713,16 +797,20 @@ def handle_event(event):
       strat_addr = event.args.strategy
       strat_name = strats.get(strat_addr, 'farming strategy')
       dt = datetime.datetime.utcfromtimestamp(event.args.timestamp).strftime('%Y-%m-%d %H:%M:%S')
-      farm_xfrs = ''
+      msg_farmxfrs = ''
+      msg_shareprice = ''
       receipt = w3.eth.getTransactionReceipt(txhash)
       token_farm_logs = token_farm_contract.events.Transfer().processReceipt(receipt, errors=DISCARD)
       for xfr in token_farm_logs:
         if xfr.address == TOKEN_FARM_ADDR and (xfr.args.to == PROFITSHARE_V2_ADDR or xfr.args.to == PROFITSHARE_V3_ADDR):
-          farm_xfrs += (f'\n:farmer: FARM to profit share: `{xfr.args.value*10**-18}`')
-      msg =  (f':tractor: At `{dt} GMT`, did `HardWork` on [{asset}](<https://etherscan.io/tx/{txhash}>)\n'
-              f':tools: Using the [{strat_name}](<https://etherscan.io/address/{strat_addr}#code>)!\n'
-              f':chart_with_upwards_trend: Share price changes `{round(100*shareprice_delta,4):.4f}%` to `{round(shareprice,6):.6f}`!'
-              f'{farm_xfrs}'
+          msg_farmxfrs += (f'\n:farmer: FARM to profit share: `{xfr.args.value*10**-18}`')
+      if shareprice_delta > 0:
+        msg_shareprice = f'\n:chart_with_upwards_trend: Share price changes `{round(100*shareprice_delta,4):.4f}%` to `{round(shareprice,6):.6f}`!'
+
+      msg =  (f':tractor: [{asset}](<https://etherscan.io/tx/{txhash}>) harvested at `{dt} GMT`\n'
+              f':tools: Using the [{strat_name}](<https://etherscan.io/address/{strat_addr}#code>)!'
+              f'{msg_shareprice}'
+              f'{msg_farmxfrs}'
               f' <:chadright:758033272101011622> {random.choice(CHADISMS)}.'
               )
     except:
@@ -791,15 +879,18 @@ def main():
   if LOOKBACK == 'True':
     # set up lookback
     lookback_filters = []
+    lookback_filters.append(fcash_contract.events.PositionCreated.createFilter(fromBlock=START_BLOCK_ETH))
     if LOOKBACK_MINTER == 'True':
       lookback_filters.append(minter_contract.events.MintingAnnounced.createFilter(fromBlock=START_BLOCK_ETH))
     if LOOKBACK_HARVESTS == 'True':
       lookback_filters.append(controller_contract.events.SharePriceChangeLog.createFilter(fromBlock=START_BLOCK_ETH))
+      lookback_filters.append(controller2_contract.events.SharePriceChangeLog.createFilter(fromBlock=START_BLOCK_ETH))
     if LOOKBACK_TRADES == 'True':
       lookback_filters.append(unipool_usdc_contract.events.Swap.createFilter(fromBlock=START_BLOCK_ETH))
       lookback_filters.append(unipool_eth_contract.events.Swap.createFilter(fromBlock=START_BLOCK_ETH))
     if LOOKBACK_BURNS == 'True':
       lookback_filters.append(grain_contract.events.Transfer.createFilter(fromBlock=START_BLOCK_ETH, argument_filters={"to":ZERO_ADDR}))
+      lookback_filters.append(offset_contract.events.Offset.createFilter(fromBlock=START_BLOCK_ETH, argument_filters={"onBehalfOf":'harvest.finance'}))
     if LOOKBACK_STRATEGIES == 'True':
       for vault in vaults:
         if vaults.get(vault).get('type', '') == 'timelock':
@@ -826,10 +917,13 @@ def main():
     event_filters = []
     print('watching for new events...')
     loop = asyncio.get_event_loop()
+    event_filters.append(fcash_contract.events.PositionCreated.createFilter(fromBlock='latest'))
     event_filters.append(controller_contract.events.SharePriceChangeLog.createFilter(fromBlock='latest'))
+    event_filters.append(controller2_contract.events.SharePriceChangeLog.createFilter(fromBlock='latest'))
     event_filters.append(unipool_usdc_contract.events.Swap.createFilter(fromBlock='latest'))
     event_filters.append(unipool_eth_contract.events.Swap.createFilter(fromBlock='latest'))
     event_filters.append(grain_contract.events.Transfer.createFilter(fromBlock='latest', argument_filters={"to":ZERO_ADDR}))
+    event_filters.append(offset_contract.events.Offset.createFilter(fromBlock='latest', argument_filters={"onBehalfOf":'harvest.finance'}))
     event_filters.append(minter_contract.events.MintingAnnounced.createFilter(fromBlock='latest'))
     # MATIC events
     event_filters.append(matic_root_contract.events.NewHeaderBlock.createFilter(fromBlock='latest'))
